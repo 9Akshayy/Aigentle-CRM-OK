@@ -9,11 +9,13 @@ export const STAGES = [
 ];
 
 export const SERVICES = [
+  'Mobile App Development',
+  'Website Development',
+  'Web & Mobile App Development',
   'AI & Machine Learning Solutions',
   'Cloud & DevOps Architecture',
   'Custom Software Development',
   'Cybersecurity & Compliance',
-  'Mobile App Development',
   'Managed IT Support & Staffing',
   'Data Engineering & Analytics',
   'IT Strategy & Digital Transformation'
@@ -29,9 +31,9 @@ export const PRIORITIES = [
 export const SOURCES = [
   'Website',
   'LinkedIn',
+  'Meta / Google Ads Lead Form',
   'Referral',
   'Cold Outreach',
-  'Google Ads',
   'Tech Event/Webinar',
   'Clutch / Partner',
   'Other'
@@ -55,4 +57,12 @@ export const FORMAT_CURRENCY = (amount, currency = 'INR') => {
   const symbol = CURRENCY_SYMBOLS[currency] || '₹';
   if (amount === undefined || amount === null || isNaN(amount)) return `${symbol}0`;
   return `${symbol}${Number(amount).toLocaleString('en-IN')}`;
+};
+
+export const GET_WHATSAPP_LINK = (phone, text = '') => {
+  if (!phone) return null;
+  let clean = phone.replace(/[^0-9]/g, '');
+  if (clean.length === 10) clean = '91' + clean;
+  const msg = text ? `?text=${encodeURIComponent(text)}` : '';
+  return `https://wa.me/${clean}${msg}`;
 };

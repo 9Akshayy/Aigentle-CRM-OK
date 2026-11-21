@@ -7,6 +7,7 @@ import {
   AlertCircle, 
   Phone, 
   Mail, 
+  MessageCircle,
   ExternalLink, 
   Plus, 
   Trash2,
@@ -14,7 +15,7 @@ import {
   User,
   Filter
 } from 'lucide-react';
-import { PRIORITIES } from '../constants/crm';
+import { PRIORITIES, GET_WHATSAPP_LINK } from '../constants/crm';
 
 export default function TasksView({ onOpenLead, leads, onRefreshStats }) {
   const [tasks, setTasks] = useState([]);
@@ -287,6 +288,18 @@ export default function TasksView({ onOpenLead, leads, onRefreshStats }) {
                   </div>
 
                   <div className="flex items-center gap-1.5">
+                    {t.phone && (
+                      <a
+                        href={GET_WHATSAPP_LINK(t.phone, `Hi ${t.contact_person}, following up on your inquiry with Aigentle IT Services.`)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300"
+                        title={`WhatsApp ${t.phone}`}
+                      >
+                        <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      </a>
+                    )}
+
                     {t.phone && (
                       <a
                         href={`tel:${t.phone}`}

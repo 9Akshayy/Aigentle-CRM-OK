@@ -4,7 +4,8 @@ import {
   PRIORITIES, 
   SERVICES, 
   OWNERS, 
-  FORMAT_CURRENCY 
+  FORMAT_CURRENCY,
+  GET_WHATSAPP_LINK 
 } from '../constants/crm';
 import { 
   Building2, 
@@ -15,6 +16,7 @@ import {
   MoreHorizontal, 
   Phone, 
   Mail, 
+  MessageCircle,
   ArrowRight,
   Filter,
   CheckCircle2,
@@ -269,12 +271,24 @@ export default function KanbanBoard({
                             ))}
                           </select>
 
-                          <div className="flex items-center gap-1.5 text-slate-400">
+                          <div className="flex items-center gap-1 text-slate-400">
+                            {lead.phone && (
+                              <a
+                                href={GET_WHATSAPP_LINK(lead.phone, `Hi ${lead.contact_person}, this is regarding your inquiry for ${lead.service} with Aigentle IT Services.`)}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-1 hover:text-emerald-400 hover:bg-slate-700 rounded transition-colors"
+                                title={`WhatsApp ${lead.contact_person}`}
+                              >
+                                <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                              </a>
+                            )}
                             {lead.phone && (
                               <a
                                 href={`tel:${lead.phone}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="p-1 hover:text-emerald-400 hover:bg-slate-700 rounded transition-colors"
+                                className="p-1 hover:text-blue-400 hover:bg-slate-700 rounded transition-colors"
                                 title={`Call ${lead.contact_person}`}
                               >
                                 <Phone className="w-3 h-3" />

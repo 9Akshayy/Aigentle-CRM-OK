@@ -278,26 +278,16 @@ export default function App() {
               <TasksView
                 leads={leads}
                 onOpenLead={(lead) => setSelectedLeadForDrawer(lead)}
-                onRefreshStats={() => crmApi.getStats().then(s => s.success && setStats(s.data))}
+                onRefreshStats={loadData}
               />
             )}
 
             {currentView === 'templates' && (
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-center space-y-4">
-                <h3 className="text-lg font-bold text-white">IT Services Proposal & Email Assistant</h3>
-                <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  Select any lead to generate high-converting technical proposals, architecture review follow-ups, and cloud modernization scopes.
-                </p>
-                <button
-                  onClick={() => {
-                    setLeadForEmailTemplate(leads[0] || null);
-                    setIsEmailTemplateOpen(true);
-                  }}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-lg shadow-indigo-600/30"
-                >
-                  Open Proposal Generator
-                </button>
-              </div>
+              <EmailTemplateModal
+                isEmbedded={true}
+                leads={leads}
+                currency={currency}
+              />
             )}
           </>
         )}

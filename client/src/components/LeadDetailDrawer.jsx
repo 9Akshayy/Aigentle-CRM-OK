@@ -4,7 +4,8 @@ import {
   PRIORITIES, 
   SERVICES, 
   OWNERS, 
-  FORMAT_CURRENCY 
+  FORMAT_CURRENCY,
+  GET_WHATSAPP_LINK 
 } from '../constants/crm';
 import { crmApi } from '../api/crmApi';
 import { 
@@ -312,13 +313,13 @@ export default function LeadDetailDrawer({
 
                 {lead.phone && (
                   <a
-                    href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`}
+                    href={GET_WHATSAPP_LINK(lead.phone, `Hi ${lead.contact_person}, this is regarding your inquiry for ${lead.service} with Aigentle IT Services.`)}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-medium border border-emerald-500/30 transition-colors"
                   >
                     <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    WhatsApp
+                    WhatsApp Chat
                   </a>
                 )}
 

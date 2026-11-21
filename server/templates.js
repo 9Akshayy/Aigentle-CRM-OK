@@ -2,6 +2,53 @@
 
 const templates = [
   {
+    id: 'mobile-app-proposal',
+    title: 'Mobile App Development Proposal & SOW',
+    service: 'Mobile App Development',
+    subject: 'Aigentle IT Services: Mobile App Development Proposal for {{company_name}}',
+    body: `Hi {{contact_person}},
+
+Thank you for connecting with Aigentle IT Services regarding the mobile application project for {{company_name}}.
+
+Here is an executive outline of what we propose:
+• Platform: Cross-platform iOS & Android mobile application (Flutter / React Native).
+• Features: Modern responsive UI, secure user authentication, high-performance API integration, push notifications, and offline data sync.
+• Delivery Model: Sprint-by-sprint development with weekly live builds for your testing and review.
+• Estimated Investment: {{deal_value}} (All milestones included).
+
+We can initiate development immediately and deliver the initial interactive MVP within 2 to 3 weeks.
+
+Would you be free for a quick 10-minute call this {{preferred_day}} to finalize the feature specification?
+
+Warm regards,
+
+{{owner}}
+Aigentle IT Services
+https://aigentle.com`
+  },
+  {
+    id: 'website-app-proposal',
+    title: 'Website & Web Application Development Proposal',
+    service: 'Website Development',
+    subject: 'Website & Digital Platform Proposal for {{company_name}} - Aigentle IT',
+    body: `Dear {{contact_person}},
+
+Following our discussion regarding {{company_name}}'s website and software development requirements:
+
+Aigentle proposes a modern, fast, SEO-optimized, and conversion-focused web platform:
+1. Architecture: High-speed responsive web platform with mobile-first UI/UX.
+2. Speed & Security: Free SSL setup, fast CDN delivery, Google PageSpeed 90+ score target, and full admin dashboard.
+3. Turnaround: Initial design mockup delivered within 5 days.
+4. Total Project Scope: {{deal_value}}.
+
+Please let me know if you would like me to share our portfolio and start drafting the initial design prototype.
+
+Best regards,
+
+{{owner}}
+Aigentle IT Services`
+  },
+  {
     id: 'ai-discovery-followup',
     title: 'AI & Automation Discovery Follow-up',
     service: 'AI & Machine Learning Solutions',
@@ -76,13 +123,13 @@ Aigentle IT Services`
     subject: 'Checking in on {{company_name}}\'s IT initiatives',
     body: `Hi {{contact_person}},
 
-I hope you\'re having a productive week!
+I hope you're having a productive week!
 
-I wanted to briefly circle back regarding the discussion we had around {{company_name}}\'s IT and technology goals.
+I wanted to briefly circle back regarding the discussion we had around {{company_name}}'s IT and technology goals.
 
-We recently launched new enterprise accelerators for {{service}} that help reduce development time and cloud operational overhead significantly.
+We recently launched new enterprise accelerators for {{service}} that help reduce development time significantly.
 
-If this is still on your roadmap for this quarter, I\'d love to share a quick 5-minute overview of how we helped similar companies achieve 40%+ productivity gains.
+If this is still on your roadmap for this month, I'd love to share a quick 5-minute overview.
 
 Looking forward to hearing your thoughts!
 

@@ -4,7 +4,8 @@ import {
   PRIORITIES, 
   SERVICES, 
   OWNERS, 
-  FORMAT_CURRENCY 
+  FORMAT_CURRENCY,
+  GET_WHATSAPP_LINK 
 } from '../constants/crm';
 import { 
   User, 
@@ -14,6 +15,7 @@ import {
   Edit3, 
   Phone, 
   Mail, 
+  MessageCircle,
   ExternalLink,
   ChevronUp,
   ChevronDown,
@@ -330,8 +332,19 @@ export default function LeadTable({
                         <div className="flex items-center justify-center gap-1.5">
                           {lead.phone && (
                             <a
-                              href={`tel:${lead.phone}`}
+                              href={GET_WHATSAPP_LINK(lead.phone, `Hi ${lead.contact_person}, this is regarding your inquiry for ${lead.service} with Aigentle IT Services.`)}
+                              target="_blank"
+                              rel="noreferrer"
                               className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-emerald-400"
+                              title={`WhatsApp ${lead.contact_person}`}
+                            >
+                              <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                            </a>
+                          )}
+                          {lead.phone && (
+                            <a
+                              href={`tel:${lead.phone}`}
+                              className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-blue-400"
                               title={`Call ${lead.phone}`}
                             >
                               <Phone className="w-3.5 h-3.5" />
