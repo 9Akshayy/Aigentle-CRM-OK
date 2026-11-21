@@ -19,7 +19,7 @@ export default function LeadFormModal({ isOpen, onClose, onSave, currency }) {
     location: '',
     service: SERVICES[0],
     deal_value: '',
-    currency: currency || 'USD',
+    currency: currency || 'INR',
     stage: 'New',
     priority: 'Medium',
     source: 'Website',

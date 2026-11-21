@@ -27,7 +27,7 @@ function initSchema() {
       location TEXT,
       service TEXT NOT NULL,
       deal_value REAL DEFAULT 0,
-      currency TEXT DEFAULT 'USD',
+      currency TEXT DEFAULT 'INR',
       stage TEXT DEFAULT 'New',
       priority TEXT DEFAULT 'Medium',
       source TEXT DEFAULT 'Website',

@@ -26,7 +26,7 @@ export default function App() {
   const [selectedService, setSelectedService] = useState('all');
   const [selectedPriority, setSelectedPriority] = useState('all');
   const [selectedOwner, setSelectedOwner] = useState('all');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('INR');
 
   // Sorting
   const [sortField, setSortField] = useState('updated_at');

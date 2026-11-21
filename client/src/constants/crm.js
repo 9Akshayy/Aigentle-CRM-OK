@@ -45,14 +45,14 @@ export const OWNERS = [
 ];
 
 export const CURRENCY_SYMBOLS = {
-  USD: '$',
   INR: '₹',
+  USD: '$',
   EUR: '€',
   GBP: '£'
 };
 
-export const FORMAT_CURRENCY = (amount, currency = 'USD') => {
-  const symbol = CURRENCY_SYMBOLS[currency] || '$';
+export const FORMAT_CURRENCY = (amount, currency = 'INR') => {
+  const symbol = CURRENCY_SYMBOLS[currency] || '₹';
   if (amount === undefined || amount === null || isNaN(amount)) return `${symbol}0`;
-  return `${symbol}${Number(amount).toLocaleString()}`;
+  return `${symbol}${Number(amount).toLocaleString('en-IN')}`;
 };
