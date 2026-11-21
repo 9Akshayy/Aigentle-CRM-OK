@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+client/node_modules/
+
+# Production build
+client/dist/
+
+# Environment variables
+.env
+.env.local
+
+# Database (keep db local or back up separately)
+# data/crm.db
+
+# OS / Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
