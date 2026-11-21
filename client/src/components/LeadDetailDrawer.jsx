@@ -260,7 +260,7 @@ export default function LeadDetailDrawer({
                   <span>{lead.probability}% Win Probability</span>
                 </div>
 
-                <div className="grid grid-cols-7 gap-1">
+                <div className="flex sm:grid sm:grid-cols-7 gap-1.5 overflow-x-auto pb-1.5 no-scrollbar">
                   {STAGES.map((s, idx) => {
                     const currentIdx = STAGES.findIndex(st => st.id === lead.stage);
                     const isPassed = idx <= currentIdx && lead.stage !== 'Closed Lost';
@@ -279,7 +279,7 @@ export default function LeadDetailDrawer({
                       <button
                         key={s.id}
                         onClick={() => handleStageChange(s.id)}
-                        className={`py-1.5 px-1 rounded text-[10px] text-center transition-all truncate hover:opacity-90 ${bg}`}
+                        className={`shrink-0 sm:shrink py-1.5 px-3 rounded-lg text-xs text-center transition-all truncate hover:opacity-90 ${bg}`}
                         title={`Move to ${s.label}`}
                       >
                         {s.id === 'Proposal Sent' ? 'Proposal' : s.label.replace('Closed ', '')}

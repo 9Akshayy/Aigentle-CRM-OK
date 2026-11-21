@@ -138,7 +138,7 @@ export default function KanbanBoard({
       </div>
 
       {/* Kanban Stages Grid */}
-      <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x select-none">
+      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory select-none">
         {STAGES.map((stage) => {
           const stageLeads = leads.filter(l => l.stage === stage.id);
           const stageTotalValue = stageLeads.reduce((sum, l) => sum + (Number(l.deal_value) || 0), 0);
@@ -150,7 +150,7 @@ export default function KanbanBoard({
               onDragOver={(e) => handleDragOver(e, stage.id)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, stage.id)}
-              className={`flex-shrink-0 w-80 rounded-2xl flex flex-col bg-slate-900/40 border transition-all ${
+              className={`flex-shrink-0 w-[86vw] max-w-[320px] sm:w-80 rounded-2xl flex flex-col bg-slate-900/40 border snap-center transition-all ${
                 isOver 
                   ? 'border-indigo-500 ring-2 ring-indigo-500/30 bg-slate-900/80' 
                   : 'border-slate-800/80'

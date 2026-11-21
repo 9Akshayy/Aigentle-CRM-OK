@@ -73,8 +73,8 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Nav Views Switcher */}
-          <nav className="flex items-center gap-1 bg-slate-900/90 border border-slate-800 p-1 rounded-xl">
+          {/* Nav Views Switcher (Desktop) */}
+          <nav className="hidden md:flex items-center gap-1 bg-slate-900/90 border border-slate-800 p-1 rounded-xl">
             <button
               onClick={() => setCurrentView('kanban')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -218,6 +218,74 @@ export default function Navbar({
           </div>
         </div>
 
+      </div>
+
+      {/* Mobile Bottom Navigation Bar (iPhone & Android) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 border-t border-slate-800 backdrop-blur-xl px-2 py-2 flex items-center justify-around shadow-2xl safe-area-pb">
+        <button
+          onClick={() => setCurrentView('kanban')}
+          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
+            currentView === 'kanban'
+              ? 'text-indigo-400 font-bold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Columns3 className="w-4 h-4" />
+          <span className="text-[10px]">Pipeline</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentView('table')}
+          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
+            currentView === 'table'
+              ? 'text-indigo-400 font-bold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Table className="w-4 h-4" />
+          <span className="text-[10px]">Table</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentView('analytics')}
+          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
+            currentView === 'analytics'
+              ? 'text-indigo-400 font-bold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          <span className="text-[10px]">Analytics</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentView('tasks')}
+          className={`relative flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
+            currentView === 'tasks'
+              ? 'text-indigo-400 font-bold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <CalendarClock className="w-4 h-4" />
+          <span className="text-[10px]">Tasks</span>
+          {overdueTasksCount > 0 && (
+            <span className="absolute top-0 right-2 w-4 h-4 flex items-center justify-center rounded-full text-[9px] font-bold bg-rose-500 text-white">
+              {overdueTasksCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setCurrentView('templates')}
+          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
+            currentView === 'templates'
+              ? 'text-indigo-400 font-bold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span className="text-[10px]">Proposals</span>
+        </button>
       </div>
     </header>
   );
