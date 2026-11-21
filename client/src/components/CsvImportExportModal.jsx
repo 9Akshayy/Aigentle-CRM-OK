@@ -100,24 +100,38 @@ Skyline Cloudworks,Sarah Lin,s.lin@skylinecloud.io,+1 (555) 888-4321,https://sky
     document.body.removeChild(link);
   };
 
-  // Parse CSV File or Text
+  // Parse CSV File or Text with intelligent header & field detection
   const parseCsvText = (text) => {
     try {
       const lines = text.trim().split(/\r?\n/);
       if (lines.length < 2) return [];
 
-      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+      // Find the real header line (contains 'name', 'phone', 'email', or 'contact')
+      let headerLineIdx = -1;
+      for (let i = 0; i < Math.min(lines.length, 15); i++) {
+        const l = lines[i].toLowerCase();
+        if ((l.includes('name') || l.includes('contact')) && (l.includes('phone') || l.includes('email') || l.includes('service'))) {
+          headerLineIdx = i;
+          break;
+        }
+      }
+
+      if (headerLineIdx === -1) headerLineIdx = 0;
+
+      const rawHeaders = lines[headerLineIdx].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
 
       const results = [];
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
+      const seenContacts = new Set();
 
-        // Simple CSV splitter handling quoted values
+      for (let i = headerLineIdx + 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line || line.startsWith(',,,') || line.toLowerCase().includes('total leads:') || line.toLowerCase().includes('leads (date')) continue;
+
+        // CSV splitter handling quotes
         const regex = /(?:,|\n|^)("(?:(?:"")*[^"]*)*"|[^",\n]*|(?:\n|$))/g;
         const matches = [];
         let match;
-        while ((match = regex.exec(line)) && matches.length < headers.length) {
+        while ((match = regex.exec(line)) && matches.length < rawHeaders.length) {
           let val = match[1] || '';
           if (val.startsWith('"') && val.endsWith('"')) {
             val = val.substring(1, val.length - 1).replace(/""/g, '"');
@@ -127,26 +141,86 @@ Skyline Cloudworks,Sarah Lin,s.lin@skylinecloud.io,+1 (555) 888-4321,https://sky
         }
 
         const obj = {};
-        headers.forEach((h, idx) => {
+        let businessType = '';
+        let timeline = '';
+        let budgetRaw = '';
+        let dateVal = '';
+
+        rawHeaders.forEach((h, idx) => {
           const val = matches[idx] || '';
           if (h.includes('company')) obj.company_name = val;
-          else if (h.includes('contact') || h.includes('person') || h.includes('name')) obj.contact_person = val;
+          else if (h.includes('contact') || h === 'name' || h.includes('person') || h.includes('lead name')) obj.contact_person = val;
           else if (h.includes('email')) obj.email = val;
-          else if (h.includes('phone')) obj.phone = val;
+          else if (h.includes('phone') || h.includes('mobile')) obj.phone = val;
           else if (h.includes('service')) obj.service = val;
-          else if (h.includes('value') || h.includes('deal') || h.includes('amount')) obj.deal_value = Number(val) || 0;
+          else if (h.includes('budget') || h.includes('deal') || h.includes('value') || h.includes('price')) {
+            budgetRaw = val;
+            // Clean budget (extract highest number like "₹10,000 – ₹25,000" -> 25000)
+            const nums = val.replace(/,/g, '').match(/\d+/g);
+            if (nums && nums.length > 0) {
+              obj.deal_value = Math.max(...nums.map(n => parseInt(n, 10)));
+            } else {
+              obj.deal_value = 0;
+            }
+          }
+          else if (h.includes('business') || h.includes('type') || h.includes('industry')) businessType = val;
+          else if (h.includes('timeline') || h.includes('start')) timeline = val;
+          else if (h.includes('date') || h.includes('time')) dateVal = val;
           else if (h.includes('stage')) obj.stage = val;
           else if (h.includes('priority')) obj.priority = val;
           else if (h.includes('source')) obj.source = val;
           else if (h.includes('owner')) obj.owner = val;
-          else if (h.includes('notes')) obj.notes = val;
           else if (h.includes('location')) obj.location = val;
           else if (h.includes('website')) obj.website = val;
+          else if (h.includes('notes')) obj.notes = val;
         });
 
-        if (obj.company_name && obj.contact_person) {
-          results.push(obj);
+        // Skip repeated section headers
+        if (!obj.contact_person || obj.contact_person.toLowerCase() === 'name') continue;
+
+        // De-duplicate contacts in same file
+        const uniqueKey = (obj.email || obj.phone || obj.contact_person).toLowerCase();
+        if (seenContacts.has(uniqueKey)) continue;
+        seenContacts.add(uniqueKey);
+
+        // Fallback for company name if not explicitly present
+        if (!obj.company_name) {
+          obj.company_name = businessType ? `${obj.contact_person} (${businessType})` : `${obj.contact_person} Enterprise`;
         }
+
+        // Set Currency
+        obj.currency = budgetRaw.includes('₹') ? 'INR' : (obj.currency || 'INR');
+
+        // Normalize Service
+        if (obj.service) {
+          const sLower = obj.service.toLowerCase();
+          if (sLower.includes('mobile')) obj.service = 'Mobile App Development';
+          else if (sLower.includes('web') && sLower.includes('mobile')) obj.service = 'Mobile App Development';
+          else if (sLower.includes('web')) obj.service = 'Custom Software Development';
+        } else {
+          obj.service = 'Mobile App Development';
+        }
+
+        // Priority from timeline
+        if (!obj.priority) {
+          obj.priority = timeline.toLowerCase().includes('immediately') ? 'Urgent' : 'High';
+        }
+
+        // Notes compilation
+        const extraNotes = [];
+        if (timeline) extraNotes.push(`Timeline: ${timeline}`);
+        if (businessType) extraNotes.push(`Industry: ${businessType}`);
+        if (budgetRaw) extraNotes.push(`Budget: ${budgetRaw}`);
+        if (dateVal) extraNotes.push(`Captured: ${dateVal}`);
+        if (extraNotes.length > 0) {
+          obj.notes = obj.notes ? `${obj.notes} | ${extraNotes.join(' | ')}` : extraNotes.join(' | ');
+        }
+
+        obj.stage = obj.stage || 'New';
+        obj.source = obj.source || 'Ad Campaign / Form';
+        obj.owner = obj.owner || 'Alex Mercer';
+
+        results.push(obj);
       }
 
       return results;
