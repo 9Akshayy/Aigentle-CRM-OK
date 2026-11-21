@@ -16,13 +16,16 @@ import {
   Phone, 
   Mail, 
   MessageCircle,
-  ExternalLink,
-  ChevronUp,
-  ChevronDown,
-  CheckSquare,
-  Square,
+  ExternalLink, 
+  ChevronUp, 
+  ChevronDown, 
+  CheckSquare, 
+  Square, 
   AlertTriangle,
-  Briefcase
+  Briefcase,
+  Filter,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 
 export default function LeadTable({
@@ -36,16 +39,18 @@ export default function LeadTable({
   sortField,
   setSortField,
   sortOrder,
-  setSortOrder
+  setSortOrder,
+  initialStageFilter = 'all'
 }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkTargetStage, setBulkTargetStage] = useState('');
+  const [tableStageFilter, setTableStageFilter] = useState(initialStageFilter || 'all');
 
-  const toggleSelectAll = () => {
-    if (selectedIds.length === leads.length) {
+  const toggleSelectAll = (filteredLeads) => {
+    if (selectedIds.length === filteredLeads.length && filteredLeads.length > 0) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(leads.map(l => l.id));
+      setSelectedIds(filteredLeads.map(l => l.id));
     }
   };
 
@@ -82,7 +87,14 @@ export default function LeadTable({
     }
   };
 
-  const sortedLeads = [...leads].sort((a, b) => {
+  // 1. Filter by Stage if selected
+  const filteredByStage = leads.filter(l => {
+    if (tableStageFilter === 'all') return true;
+    return l.stage === tableStageFilter;
+  });
+
+  // 2. Sort leads
+  const sortedLeads = [...filteredByStage].sort((a, b) => {
     let aVal = a[sortField];
     let bVal = b[sortField];
 
@@ -101,6 +113,103 @@ export default function LeadTable({
 
   return (
     <div className="flex flex-col gap-3">
+      
+      {/* Stage Navigation & Filter Toolbar */}
+      <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-md">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-2 pb-2 border-b border-slate-800">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              Filter by Pipeline Stage:
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={tableStageFilter}
+              onChange={(e) => setTableStageFilter(e.target.value)}
+              className="px-2.5 py-1 text-xs bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-medium"
+            >
+              <option value="all">All Stages ({leads.length})</option>
+              {STAGES.map(s => {
+                const count = leads.filter(l => l.stage === s.id).length;
+                return (
+                  <option key={s.id} value={s.id}>
+                    {s.label} ({count})
+                  </option>
+                );
+              })}
+            </select>
+
+            {tableStageFilter !== 'all' && (
+              <button
+                onClick={() => setTableStageFilter('all')}
+                className="text-xs text-cyan-400 hover:text-cyan-300 underline font-medium"
+              >
+                Clear Filter
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Filter Stage Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+          <button
+            onClick={() => setTableStageFilter('all')}
+            className={`shrink-0 px-3 py-1.5 rounded-xl font-medium transition-all flex items-center gap-1.5 ${
+              tableStageFilter === 'all'
+                ? 'bg-white text-slate-950 font-bold shadow-md'
+                : 'bg-slate-800/70 text-slate-300 hover:bg-slate-800 border border-slate-700/50'
+            }`}
+          >
+            <span>All Stages</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              tableStageFilter === 'all' ? 'bg-slate-950 text-white' : 'bg-slate-900 text-slate-400'
+            }`}>
+              {leads.length}
+            </span>
+          </button>
+
+          {STAGES.map((s) => {
+            const count = leads.filter(l => l.stage === s.id).length;
+            const isSelected = tableStageFilter === s.id;
+
+            let activePillStyle = 'bg-indigo-600 text-white font-bold ring-2 ring-indigo-400/50 shadow-md';
+            if (s.id === 'Qualified') activePillStyle = 'bg-cyan-500 text-slate-950 font-bold ring-2 ring-cyan-300 shadow-md shadow-cyan-500/30';
+            else if (s.id === 'Closed Won') activePillStyle = 'bg-emerald-600 text-white font-bold ring-2 ring-emerald-400 shadow-md shadow-emerald-500/30';
+            else if (s.id === 'Closed Lost') activePillStyle = 'bg-rose-600 text-white font-bold ring-2 ring-rose-400';
+            else if (s.id === 'Proposal Sent') activePillStyle = 'bg-amber-500 text-slate-950 font-bold ring-2 ring-amber-300';
+            else if (s.id === 'Negotiation') activePillStyle = 'bg-purple-600 text-white font-bold ring-2 ring-purple-400';
+
+            return (
+              <button
+                key={s.id}
+                onClick={() => setTableStageFilter(s.id)}
+                className={`shrink-0 px-3 py-1.5 rounded-xl font-medium transition-all flex items-center gap-1.5 ${
+                  isSelected
+                    ? activePillStyle
+                    : 'bg-slate-800/70 text-slate-300 hover:bg-slate-800 border border-slate-700/50'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${
+                  s.id === 'Qualified' ? 'bg-cyan-400' :
+                  s.id === 'Closed Won' ? 'bg-emerald-400' :
+                  s.id === 'Proposal Sent' ? 'bg-amber-400' :
+                  s.id === 'Closed Lost' ? 'bg-rose-400' :
+                  s.id === 'Negotiation' ? 'bg-purple-400' :
+                  s.id === 'Contacted' ? 'bg-indigo-400' : 'bg-blue-400'
+                }`} />
+                <span>{s.label}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  isSelected ? 'bg-slate-950/20 text-current' : count > 0 ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-900 text-slate-500'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
       
       {/* Bulk Action Bar */}
       {selectedIds.length > 0 && (
@@ -154,8 +263,8 @@ export default function LeadTable({
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900/90 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-4 w-10 text-center">
-                  <button onClick={toggleSelectAll} className="text-slate-400 hover:text-slate-200">
-                    {selectedIds.length === leads.length && leads.length > 0 ? (
+                  <button onClick={() => toggleSelectAll(sortedLeads)} className="text-slate-400 hover:text-slate-200">
+                    {selectedIds.length === sortedLeads.length && sortedLeads.length > 0 ? (
                       <CheckSquare className="w-4 h-4 text-indigo-400" />
                     ) : (
                       <Square className="w-4 h-4" />
@@ -218,7 +327,15 @@ export default function LeadTable({
               {sortedLeads.length === 0 ? (
                 <tr>
                   <td colSpan="10" className="py-12 text-center text-slate-500">
-                    No leads found matching your criteria.
+                    <p className="text-sm font-medium">No leads found in stage "{tableStageFilter}".</p>
+                    {tableStageFilter !== 'all' && (
+                      <button
+                        onClick={() => setTableStageFilter('all')}
+                        className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 underline"
+                      >
+                        View all {leads.length} leads
+                      </button>
+                    )}
                   </td>
                 </tr>
               ) : (
@@ -284,17 +401,30 @@ export default function LeadTable({
                         </div>
                       </td>
 
-                      {/* Stage Dropdown */}
+                      {/* Stage Dropdown & 1-Click Qualify */}
                       <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                        <select
-                          value={lead.stage}
-                          onChange={(e) => onStageChange(lead.id, e.target.value)}
-                          className={`text-xs rounded-lg px-2 py-1 font-medium border bg-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${stageConfig.badgeColor}`}
-                        >
-                          {STAGES.map(s => (
-                            <option key={s.id} value={s.id}>{s.label}</option>
-                          ))}
-                        </select>
+                        <div className="flex items-center gap-1.5">
+                          <select
+                            value={lead.stage}
+                            onChange={(e) => onStageChange(lead.id, e.target.value)}
+                            className={`text-xs rounded-lg px-2 py-1 font-semibold border bg-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${stageConfig.badgeColor}`}
+                          >
+                            {STAGES.map(s => (
+                              <option key={s.id} value={s.id}>{s.label}</option>
+                            ))}
+                          </select>
+
+                          {(lead.stage === 'New' || lead.stage === 'Contacted') && (
+                            <button
+                              type="button"
+                              onClick={() => onStageChange(lead.id, 'Qualified')}
+                              className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/40 border border-cyan-500/40 transition-colors shadow-sm"
+                              title="Quick Qualify Lead"
+                            >
+                              ⚡ Qualify
+                            </button>
+                          )}
+                        </div>
                       </td>
 
                       {/* Priority */}

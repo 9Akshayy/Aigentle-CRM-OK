@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { FORMAT_CURRENCY, STAGES } from '../constants/crm';
 
-export default function AnalyticsView({ stats, currency }) {
+export default function AnalyticsView({ stats, currency, onSelectStage }) {
   if (!stats) return null;
 
   const maxServiceValue = Math.max(...(stats.serviceBreakdown || []).map(s => s.total_value || 0), 1);
@@ -77,17 +77,31 @@ export default function AnalyticsView({ stats, currency }) {
                 const pct = Math.round(((stageItem.value || 0) / maxStageValue) * 100);
 
                 return (
-                  <div key={stageItem.stage} className="space-y-1">
+                  <div 
+                    key={stageItem.stage} 
+                    onClick={() => onSelectStage && onSelectStage(stageItem.stage)}
+                    className="space-y-1 p-2 -mx-2 rounded-xl transition-all cursor-pointer hover:bg-slate-800/60 hover:scale-[1.01] group border border-transparent hover:border-slate-700/60"
+                    title={`Click to view ${stageItem.stage} leads in Pipeline`}
+                  >
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-200 flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${
+                      <span className="font-semibold text-slate-200 flex items-center gap-2 group-hover:text-cyan-300 transition-colors">
+                        <span className={`w-2.5 h-2.5 rounded-full ${
                           stageItem.stage === 'Closed Won' ? 'bg-emerald-400' :
                           stageItem.stage === 'Closed Lost' ? 'bg-rose-400' :
-                          stageItem.stage === 'Proposal Sent' ? 'bg-amber-400' : 'bg-indigo-400'
+                          stageItem.stage === 'Qualified' ? 'bg-cyan-400 shadow-sm shadow-cyan-400' :
+                          stageItem.stage === 'Proposal Sent' ? 'bg-amber-400' :
+                          stageItem.stage === 'Negotiation' ? 'bg-purple-400' : 'bg-indigo-400'
                         }`} />
-                        {stageItem.stage}
-                        <span className="text-[10px] text-slate-400 px-1.5 py-0.2 rounded bg-slate-800">
+                        <span>{stageItem.stage}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors ${
+                          stageItem.count > 0 
+                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' 
+                            : 'bg-slate-800 text-slate-400'
+                        }`}>
                           {stageItem.count} {stageItem.count === 1 ? 'deal' : 'deals'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                          View in Pipeline ➔
                         </span>
                       </span>
 
@@ -102,6 +116,7 @@ export default function AnalyticsView({ stats, currency }) {
                         className={`h-full rounded-full transition-all duration-700 ${
                           stageItem.stage === 'Closed Won' ? 'bg-emerald-500' :
                           stageItem.stage === 'Closed Lost' ? 'bg-rose-500/70' :
+                          stageItem.stage === 'Qualified' ? 'bg-cyan-400 shadow-md shadow-cyan-400/50' :
                           stageItem.stage === 'Proposal Sent' ? 'bg-amber-500' :
                           stageItem.stage === 'Negotiation' ? 'bg-purple-500' : 'bg-indigo-500'
                         }`}

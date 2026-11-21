@@ -21,6 +21,9 @@ export default function App() {
   // Active view: 'kanban' | 'table' | 'analytics' | 'tasks' | 'templates'
   const [currentView, setCurrentView] = useState('kanban');
 
+  // Stage focus navigation
+  const [targetStageForKanban, setTargetStageForKanban] = useState('all');
+
   // Global filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedService, setSelectedService] = useState('all');
@@ -248,6 +251,7 @@ export default function App() {
                 setSelectedPriority={setSelectedPriority}
                 selectedOwner={selectedOwner}
                 setSelectedOwner={setSelectedOwner}
+                initialStageFilter={targetStageForKanban}
               />
             )}
 
@@ -264,6 +268,7 @@ export default function App() {
                 setSortField={setSortField}
                 sortOrder={sortOrder}
                 setSortOrder={setSortOrder}
+                initialStageFilter={targetStageForKanban}
               />
             )}
 
@@ -271,6 +276,10 @@ export default function App() {
               <AnalyticsView
                 stats={stats}
                 currency={currency}
+                onSelectStage={(stage) => {
+                  setTargetStageForKanban(stage);
+                  setCurrentView('kanban');
+                }}
               />
             )}
 
@@ -308,6 +317,10 @@ export default function App() {
             setIsEmailTemplateOpen(true);
           }}
           currency={currency}
+          onViewStageInBoard={(stage) => {
+            setTargetStageForKanban(stage);
+            setCurrentView('kanban');
+          }}
         />
       )}
 

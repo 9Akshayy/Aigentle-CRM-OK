@@ -24,10 +24,14 @@ router.get('/', (req, res) => {
         email LIKE ? OR 
         phone LIKE ? OR 
         notes LIKE ? OR
-        service LIKE ?
+        service LIKE ? OR
+        stage LIKE ? OR
+        priority LIKE ? OR
+        owner LIKE ? OR
+        location LIKE ?
       )`;
       const searchParam = `%${search.trim()}%`;
-      params.push(searchParam, searchParam, searchParam, searchParam, searchParam, searchParam);
+      params.push(searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam);
     }
 
     if (stage && stage !== 'all') {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   STAGES, 
   PRIORITIES, 
@@ -21,7 +21,13 @@ import {
   Filter,
   CheckCircle2,
   XCircle,
-  Briefcase
+  Briefcase,
+  Sparkles,
+  Zap,
+  Eye,
+  Layers,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 
 export default function KanbanBoard({
@@ -34,10 +40,60 @@ export default function KanbanBoard({
   selectedPriority,
   setSelectedPriority,
   selectedOwner,
-  setSelectedOwner
+  setSelectedOwner,
+  initialStageFilter = 'all'
 }) {
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
+
+  // Active stage navigation / filter
+  const [activeStageFilter, setActiveStageFilter] = useState(initialStageFilter || 'all');
+  const [viewMode, setViewMode] = useState('all'); // 'all' (horizontal board) | 'single' (focused column)
+  const [highlightedStage, setHighlightedStage] = useState(null);
+
+  // Toast feedback
+  const [toast, setToast] = useState(null);
+
+  const boardContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (initialStageFilter && initialStageFilter !== 'all') {
+      scrollToStage(initialStageFilter);
+    }
+  }, [initialStageFilter]);
+
+  // Smooth scroll to a stage column
+  const scrollToStage = (stageId) => {
+    setActiveStageFilter(stageId);
+    setHighlightedStage(stageId);
+
+    if (stageId === 'all') {
+      if (boardContainerRef.current) {
+        boardContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+      }
+      return;
+    }
+
+    const colId = `kanban-col-${stageId.replace(/\s+/g, '-').toLowerCase()}`;
+    const el = document.getElementById(colId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+
+    setTimeout(() => {
+      setHighlightedStage(null);
+    }, 2800);
+  };
+
+  const triggerToast = (lead, newStage) => {
+    setToast({
+      message: `"${lead.company_name}" moved to ${newStage}!`,
+      stageId: newStage
+    });
+    setTimeout(() => {
+      setToast(null);
+    }, 6000);
+  };
 
   // Drag & drop handlers
   const handleDragStart = (e, leadId) => {
@@ -63,7 +119,11 @@ export default function KanbanBoard({
     setDragOverStage(null);
     const leadId = e.dataTransfer.getData('text/plain') || draggedLeadId;
     if (leadId) {
+      const movedLead = leads.find(l => l.id === Number(leadId));
       onStageChange(Number(leadId), targetStageId);
+      if (movedLead) {
+        triggerToast(movedLead, targetStageId);
+      }
     }
     setDraggedLeadId(null);
   };
@@ -83,9 +143,145 @@ export default function KanbanBoard({
     };
   };
 
+  // Determine which stages to display based on viewMode
+  const stagesToRender = (viewMode === 'single' && activeStageFilter !== 'all')
+    ? STAGES.filter(s => s.id === activeStageFilter)
+    : STAGES;
+
+  const currentStageIndex = STAGES.findIndex(s => s.id === activeStageFilter);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       
+      {/* Toast Notification Banner */}
+      {toast && (
+        <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-cyan-950 via-slate-900 to-indigo-950 border border-cyan-500/50 text-white text-xs flex items-center justify-between shadow-2xl shadow-cyan-500/20 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <span className="font-semibold text-cyan-200">Stage Updated:</span>
+            <span>{toast.message}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => scrollToStage(toast.stageId)}
+              className="px-3 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg transition-all shadow"
+            >
+              Jump to {toast.stageId} Column ➔
+            </button>
+            <button
+              onClick={() => setToast(null)}
+              className="text-slate-400 hover:text-white p-1"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Stage Quick-Jump & Navigation Tabs (Mobile & Desktop) */}
+      <div className="mb-3 p-2.5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-md">
+        <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-800/80">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              Pipeline Stage Jump:
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-xs">
+            <button
+              onClick={() => {
+                setViewMode('all');
+                setActiveStageFilter('all');
+              }}
+              className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                viewMode === 'all'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 bg-slate-800/50'
+              }`}
+            >
+              All Columns
+            </button>
+            <button
+              onClick={() => {
+                const target = activeStageFilter === 'all' ? 'Qualified' : activeStageFilter;
+                setViewMode('single');
+                setActiveStageFilter(target);
+              }}
+              className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                viewMode === 'single'
+                  ? 'bg-cyan-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 bg-slate-800/50'
+              }`}
+              title="Show only the active column full-width (Best for phones)"
+            >
+              Focus Column
+            </button>
+          </div>
+        </div>
+
+        {/* Stage Pills Carousel */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+          <button
+            onClick={() => {
+              setActiveStageFilter('all');
+              scrollToStage('all');
+            }}
+            className={`shrink-0 px-3 py-1.5 rounded-xl font-medium transition-all flex items-center gap-1.5 ${
+              activeStageFilter === 'all'
+                ? 'bg-white text-slate-950 font-bold shadow-md'
+                : 'bg-slate-800/70 text-slate-300 hover:bg-slate-800 border border-slate-700/50'
+            }`}
+          >
+            <span>All Stages</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+              activeStageFilter === 'all' ? 'bg-slate-950 text-white' : 'bg-slate-900 text-slate-400'
+            }`}>
+              {leads.length}
+            </span>
+          </button>
+
+          {STAGES.map((s) => {
+            const count = leads.filter(l => l.stage === s.id).length;
+            const isSelected = activeStageFilter === s.id;
+
+            let activePillStyle = 'bg-indigo-600 text-white font-bold ring-2 ring-indigo-400/50 shadow-md';
+            if (s.id === 'Qualified') activePillStyle = 'bg-cyan-500 text-slate-950 font-bold ring-2 ring-cyan-300 shadow-md shadow-cyan-500/30';
+            else if (s.id === 'Closed Won') activePillStyle = 'bg-emerald-600 text-white font-bold ring-2 ring-emerald-400 shadow-md shadow-emerald-500/30';
+            else if (s.id === 'Closed Lost') activePillStyle = 'bg-rose-600 text-white font-bold ring-2 ring-rose-400';
+            else if (s.id === 'Proposal Sent') activePillStyle = 'bg-amber-500 text-slate-950 font-bold ring-2 ring-amber-300';
+            else if (s.id === 'Negotiation') activePillStyle = 'bg-purple-600 text-white font-bold ring-2 ring-purple-400';
+
+            return (
+              <button
+                key={s.id}
+                onClick={() => scrollToStage(s.id)}
+                className={`shrink-0 px-3 py-1.5 rounded-xl font-medium transition-all flex items-center gap-1.5 ${
+                  isSelected
+                    ? activePillStyle
+                    : 'bg-slate-800/70 text-slate-300 hover:bg-slate-800 border border-slate-700/50'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${
+                  s.id === 'Qualified' ? 'bg-cyan-400' :
+                  s.id === 'Closed Won' ? 'bg-emerald-400' :
+                  s.id === 'Proposal Sent' ? 'bg-amber-400' :
+                  s.id === 'Closed Lost' ? 'bg-rose-400' :
+                  s.id === 'Negotiation' ? 'bg-purple-400' :
+                  s.id === 'Contacted' ? 'bg-indigo-400' : 'bg-blue-400'
+                }`} />
+                <span>{s.label}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  isSelected ? 'bg-slate-950/20 text-current' : count > 0 ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-900 text-slate-500'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Filters Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
         <div className="flex flex-wrap items-center gap-2">
@@ -131,29 +327,79 @@ export default function KanbanBoard({
           </select>
         </div>
 
-        {/* Total leads count in view */}
-        <div className="text-xs text-slate-400">
-          Showing <span className="font-semibold text-white">{leads.length}</span> leads in pipeline
+        {/* Mode indicator & Total leads count */}
+        <div className="flex items-center gap-3 text-xs text-slate-400">
+          {viewMode === 'single' && (
+            <div className="flex items-center gap-1 text-cyan-300 font-semibold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-500/30">
+              <Eye className="w-3.5 h-3.5" />
+              <span>Focusing: {activeStageFilter}</span>
+            </div>
+          )}
+          <div>
+            Showing <span className="font-semibold text-white">{leads.length}</span> leads in pipeline
+          </div>
         </div>
       </div>
 
+      {/* Focus Mode Navigation Bar (if single stage view) */}
+      {viewMode === 'single' && activeStageFilter !== 'all' && (
+        <div className="flex items-center justify-between bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl mb-3 text-xs">
+          <button
+            onClick={() => {
+              const prevIdx = (currentStageIndex - 1 + STAGES.length) % STAGES.length;
+              scrollToStage(STAGES[prevIdx].id);
+            }}
+            className="flex items-center gap-1 text-slate-400 hover:text-white"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>Prev Stage</span>
+          </button>
+
+          <span className="font-bold text-white text-sm">
+            {activeStageFilter} ({leads.filter(l => l.stage === activeStageFilter).length} leads)
+          </span>
+
+          <button
+            onClick={() => {
+              const nextIdx = (currentStageIndex + 1) % STAGES.length;
+              scrollToStage(STAGES[nextIdx].id);
+            }}
+            className="flex items-center gap-1 text-slate-400 hover:text-white"
+          >
+            <span>Next Stage</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Kanban Stages Grid */}
-      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory select-none">
-        {STAGES.map((stage) => {
+      <div 
+        ref={boardContainerRef}
+        className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory select-none"
+      >
+        {stagesToRender.map((stage) => {
           const stageLeads = leads.filter(l => l.stage === stage.id);
           const stageTotalValue = stageLeads.reduce((sum, l) => sum + (Number(l.deal_value) || 0), 0);
           const isOver = dragOverStage === stage.id;
+          const isHighlighted = highlightedStage === stage.id;
+
+          const colId = `kanban-col-${stage.id.replace(/\s+/g, '-').toLowerCase()}`;
 
           return (
             <div
               key={stage.id}
+              id={colId}
               onDragOver={(e) => handleDragOver(e, stage.id)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, stage.id)}
-              className={`flex-shrink-0 w-[86vw] max-w-[320px] sm:w-80 rounded-2xl flex flex-col bg-slate-900/40 border snap-center transition-all ${
-                isOver 
-                  ? 'border-indigo-500 ring-2 ring-indigo-500/30 bg-slate-900/80' 
-                  : 'border-slate-800/80'
+              className={`flex-shrink-0 ${
+                viewMode === 'single' ? 'w-full max-w-2xl mx-auto' : 'w-[86vw] max-w-[320px] sm:w-80'
+              } rounded-2xl flex flex-col bg-slate-900/40 border snap-center transition-all duration-300 ${
+                isHighlighted
+                  ? 'border-cyan-400 ring-4 ring-cyan-500/40 bg-slate-900/90 shadow-2xl shadow-cyan-500/20'
+                  : isOver 
+                    ? 'border-indigo-500 ring-2 ring-indigo-500/30 bg-slate-900/80' 
+                    : 'border-slate-800/80'
               }`}
             >
               {/* Column Header */}
@@ -164,13 +410,17 @@ export default function KanbanBoard({
                     stage.id === 'Closed Lost' ? 'bg-rose-400' :
                     stage.id === 'Proposal Sent' ? 'bg-amber-400' :
                     stage.id === 'Negotiation' ? 'bg-purple-400' :
-                    stage.id === 'Qualified' ? 'bg-cyan-400' :
+                    stage.id === 'Qualified' ? 'bg-cyan-400 shadow-sm shadow-cyan-400' :
                     stage.id === 'Contacted' ? 'bg-indigo-400' : 'bg-blue-400'
                   }`} />
                   <h3 className="font-semibold text-sm text-slate-200">
                     {stage.label}
                   </h3>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-medium">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                    stage.id === 'Qualified' && stageLeads.length > 0
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}>
                     {stageLeads.length}
                   </span>
                 </div>
@@ -184,8 +434,14 @@ export default function KanbanBoard({
               <div className="p-2.5 flex-1 flex flex-col gap-2.5 min-h-[480px] overflow-y-auto max-h-[calc(100vh-280px)]">
                 {stageLeads.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center p-6 text-center border-2 border-dashed border-slate-800/60 rounded-xl my-2">
-                    <p className="text-xs text-slate-500">No leads in this stage</p>
-                    <p className="text-[10px] text-slate-600 mt-1">Drag and drop leads here</p>
+                    <p className="text-xs font-medium text-slate-400">
+                      No leads in {stage.label} stage
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-1 max-w-[200px]">
+                      {stage.id === 'Qualified' 
+                        ? 'Click "⚡ Qualify" on any New lead to move it here'
+                        : 'Drag and drop cards or use the stage menu below'}
+                    </p>
                   </div>
                 ) : (
                   stageLeads.map((lead) => {
@@ -255,21 +511,47 @@ export default function KanbanBoard({
                           </span>
                         </div>
 
-                        {/* Stage quick jump buttons on hover */}
-                        <div className="mt-2.5 pt-2 border-t border-slate-700/50 flex items-center justify-between opacity-80 group-hover:opacity-100 transition-opacity">
-                          <select
-                            onClick={(e) => e.stopPropagation()}
-                            value={lead.stage}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              onStageChange(lead.id, e.target.value);
-                            }}
-                            className="text-[10px] bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                          >
-                            {STAGES.map(s => (
-                              <option key={s.id} value={s.id}>{s.label}</option>
-                            ))}
-                          </select>
+                        {/* Stage quick jump buttons & One-Click Qualify */}
+                        <div className="mt-2.5 pt-2 border-t border-slate-700/50 flex items-center justify-between gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1.5">
+                            <select
+                              onClick={(e) => e.stopPropagation()}
+                              value={lead.stage}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                const newStage = e.target.value;
+                                onStageChange(lead.id, newStage);
+                                triggerToast(lead, newStage);
+                              }}
+                              className="text-[10px] bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            >
+                              {STAGES.map(s => (
+                                <option key={s.id} value={s.id}>{s.label}</option>
+                              ))}
+                            </select>
+
+                            {/* Direct 1-Click Qualify Button */}
+                            {(lead.stage === 'New' || lead.stage === 'Contacted') && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onStageChange(lead.id, 'Qualified');
+                                  triggerToast(lead, 'Qualified');
+                                }}
+                                className="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/40 border border-cyan-500/40 transition-colors shadow-sm flex items-center gap-1"
+                                title="One-Click Qualify Lead"
+                              >
+                                <span>⚡ Qualify</span>
+                              </button>
+                            )}
+
+                            {lead.stage === 'Qualified' && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                ✓ Qualified
+                              </span>
+                            )}
+                          </div>
 
                           <div className="flex items-center gap-1 text-slate-400">
                             {lead.phone && (

@@ -39,12 +39,14 @@ export default function LeadDetailDrawer({
   onUpdateLead,
   onDeleteLead,
   onOpenEmailTemplate,
-  currency
+  currency,
+  onViewStageInBoard
 }) {
   const [lead, setLead] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
+  const [stageNotice, setStageNotice] = useState(null);
 
   // Activity form state
   const [actType, setActType] = useState('Call');
@@ -87,6 +89,8 @@ export default function LeadDetailDrawer({
       if (res.success) {
         onUpdateLead(res.data);
         fetchLead();
+        setStageNotice(`Lead moved to "${newStage}" stage! (${res.data.probability}% Win Probability)`);
+        setTimeout(() => setStageNotice(null), 6000);
       }
     } catch (err) {
       console.error('Error updating stage:', err);
@@ -270,6 +274,7 @@ export default function LeadDetailDrawer({
                     if (isCurrent) {
                       bg = s.id === 'Closed Won' ? 'bg-emerald-600 text-white font-bold ring-2 ring-emerald-400/50' :
                            s.id === 'Closed Lost' ? 'bg-rose-600 text-white font-bold' :
+                           s.id === 'Qualified' ? 'bg-cyan-500 text-slate-950 font-bold ring-2 ring-cyan-300 shadow-md shadow-cyan-500/30' :
                            'bg-indigo-600 text-white font-bold ring-2 ring-indigo-400/50';
                     } else if (isPassed) {
                       bg = 'bg-indigo-900/60 text-indigo-200 border border-indigo-500/30';
@@ -287,6 +292,25 @@ export default function LeadDetailDrawer({
                     );
                   })}
                 </div>
+
+                {/* Stage Change Feedback Banner */}
+                {stageNotice && (
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-xs text-cyan-200 flex items-center justify-between gap-2 shadow-lg animate-in fade-in">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
+                      <span className="truncate">{stageNotice}</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        onClose();
+                        if (onViewStageInBoard) onViewStageInBoard(lead.stage);
+                      }}
+                      className="px-2.5 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg shrink-0 transition-colors shadow"
+                    >
+                      View in Pipeline ➔
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Quick Communication Action Bar */}
