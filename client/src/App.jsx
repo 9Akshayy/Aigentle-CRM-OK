@@ -9,6 +9,7 @@ import LeadDetailDrawer from './components/LeadDetailDrawer';
 import LeadFormModal from './components/LeadFormModal';
 import CalendarView from './components/CalendarView';
 import AnalyticsView from './components/AnalyticsView';
+import DivisionsView from './components/DivisionsView';
 import TasksView from './components/TasksView';
 import EmailTemplateModal from './components/EmailTemplateModal';
 import CsvImportExportModal from './components/CsvImportExportModal';
@@ -21,7 +22,7 @@ export default function App() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Active view: 'kanban' | 'table' | 'analytics' | 'tasks' | 'templates'
+  // Active view: 'kanban' | 'table' | 'calendar' | 'divisions' | 'analytics' | 'tasks' | 'templates'
   const [currentView, setCurrentView] = useState('kanban');
 
   // Stage focus navigation
@@ -159,6 +160,47 @@ export default function App() {
     }
   };
 
+  // Lead Verification & Division Management
+  const handleVerifyLead = async (id, is_verified, division) => {
+    try {
+      const res = await crmApi.verifyLead(id, { is_verified, division });
+      if (res.success) {
+        setLeads(prev => prev.map(l => l.id === id ? res.data : l));
+        if (selectedLeadForDrawer && selectedLeadForDrawer.id === id) {
+          setSelectedLeadForDrawer(res.data);
+        }
+        crmApi.getStats().then(s => s.success && setStats(s.data));
+      }
+    } catch (err) {
+      console.error('Error verifying lead:', err);
+    }
+  };
+
+  const handleUpdateDivision = async (id, division) => {
+    try {
+      const res = await crmApi.updateLead(id, { division });
+      if (res.success) {
+        setLeads(prev => prev.map(l => l.id === id ? res.data : l));
+        if (selectedLeadForDrawer && selectedLeadForDrawer.id === id) {
+          setSelectedLeadForDrawer(res.data);
+        }
+      }
+    } catch (err) {
+      console.error('Error updating division:', err);
+    }
+  };
+
+  const handleBulkVerify = async (ids, is_verified, division) => {
+    try {
+      const res = await crmApi.bulkVerifyLeads(ids, is_verified, division);
+      if (res.success) {
+        loadData();
+      }
+    } catch (err) {
+      console.error('Error bulk verifying leads:', err);
+    }
+  };
+
   // Reset Demo Leads
   const handleResetSeed = async () => {
     if (window.confirm('Load sample Aigentle IT Services demo leads? This will overwrite current records.')) {
@@ -271,6 +313,7 @@ export default function App() {
                 initialStageFilter={targetStageForKanban}
                 onOpenReminder={handleOpenReminder}
                 onOpenCallNotReceived={handleOpenCallNotReceived}
+                onVerifyLead={handleVerifyLead}
               />
             )}
 
@@ -290,6 +333,8 @@ export default function App() {
                 initialStageFilter={targetStageForKanban}
                 onOpenReminder={handleOpenReminder}
                 onOpenCallNotReceived={handleOpenCallNotReceived}
+                onVerifyLead={handleVerifyLead}
+                onBulkVerify={handleBulkVerify}
               />
             )}
 
@@ -300,6 +345,18 @@ export default function App() {
                 onStageChange={handleStageChange}
                 currency={currency}
                 onOpenNewLead={() => setIsNewLeadModalOpen(true)}
+                onOpenReminder={handleOpenReminder}
+                onOpenCallNotReceived={handleOpenCallNotReceived}
+              />
+            )}
+
+            {currentView === 'divisions' && (
+              <DivisionsView
+                leads={leads}
+                onLeadClick={(lead) => setSelectedLeadForDrawer(lead)}
+                onVerifyLead={handleVerifyLead}
+                onUpdateDivision={handleUpdateDivision}
+                currency={currency}
                 onOpenReminder={handleOpenReminder}
                 onOpenCallNotReceived={handleOpenCallNotReceived}
               />

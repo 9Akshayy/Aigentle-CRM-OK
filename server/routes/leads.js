@@ -10,6 +10,8 @@ router.get('/', (req, res) => {
       stage,
       priority,
       service,
+      division,
+      is_verified,
       owner,
       sort = 'updated_at_desc'
     } = req.query;
@@ -25,13 +27,14 @@ router.get('/', (req, res) => {
         phone LIKE ? OR 
         notes LIKE ? OR
         service LIKE ? OR
+        division LIKE ? OR
         stage LIKE ? OR
         priority LIKE ? OR
         owner LIKE ? OR
         location LIKE ?
       )`;
       const searchParam = `%${search.trim()}%`;
-      params.push(searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam);
+      params.push(searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam, searchParam);
     }
 
     if (stage && stage !== 'all') {
@@ -47,6 +50,16 @@ router.get('/', (req, res) => {
     if (service && service !== 'all') {
       query += ' AND service = ?';
       params.push(service);
+    }
+
+    if (division && division !== 'all') {
+      query += ' AND division = ?';
+      params.push(division);
+    }
+
+    if (is_verified !== undefined && is_verified !== null && is_verified !== '' && is_verified !== 'all') {
+      query += ' AND is_verified = ?';
+      params.push(Number(is_verified));
     }
 
     if (owner && owner !== 'all') {
@@ -128,6 +141,8 @@ router.post('/', (req, res) => {
       source = 'Website',
       owner = 'Alex Mercer',
       probability = 20,
+      division = 'Mobile App Division',
+      is_verified = 0,
       notes = '',
       next_followup = '',
       expected_close = ''
@@ -141,9 +156,9 @@ router.post('/', (req, res) => {
       INSERT INTO leads (
         company_name, contact_person, email, phone, website, location,
         service, deal_value, currency, stage, priority, source,
-        owner, probability, notes, next_followup, expected_close,
+        owner, probability, division, is_verified, notes, next_followup, expected_close,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     `);
 
     const insertActivity = db.prepare(`
@@ -156,7 +171,7 @@ router.post('/', (req, res) => {
       const result = insertLead.run(
         company_name, contact_person, email, phone, website, location,
         service, Number(deal_value) || 0, currency, stage, priority, source,
-        owner, Number(probability) || 20, notes, next_followup, expected_close
+        owner, Number(probability) || 20, division, is_verified ? 1 : 0, notes, next_followup, expected_close
       );
       newLeadId = result.lastInsertRowid;
 
@@ -209,6 +224,8 @@ router.put('/:id', (req, res) => {
       source = existing.source,
       owner = existing.owner,
       probability = existing.probability,
+      division = existing.division,
+      is_verified = existing.is_verified,
       notes = existing.notes,
       next_followup = existing.next_followup,
       expected_close = existing.expected_close
@@ -239,17 +256,42 @@ router.put('/:id', (req, res) => {
         );
       }
 
+      // Check for division change
+      if (division && division !== existing.division) {
+        db.prepare(`
+          INSERT INTO activities (lead_id, type, summary, details)
+          VALUES (?, 'Division Change', ?, ?)
+        `).run(
+          req.params.id,
+          `Transferred to ${division}`,
+          `Lead transferred from ${existing.division || 'Unassigned'} to ${division}`
+        );
+      }
+
+      // Check for verification change
+      const verifiedVal = is_verified !== undefined ? (is_verified ? 1 : 0) : existing.is_verified;
+      if (verifiedVal !== existing.is_verified) {
+        db.prepare(`
+          INSERT INTO activities (lead_id, type, summary, details)
+          VALUES (?, 'Verification', ?, ?)
+        `).run(
+          req.params.id,
+          verifiedVal ? `Lead Verified (${division || existing.division})` : 'Verification Removed',
+          verifiedVal ? 'Lead marked as verified by sales engineer.' : 'Verification revoked.'
+        );
+      }
+
       db.prepare(`
         UPDATE leads SET
           company_name = ?, contact_person = ?, email = ?, phone = ?, website = ?, location = ?,
           service = ?, deal_value = ?, currency = ?, stage = ?, priority = ?, source = ?,
-          owner = ?, probability = ?, notes = ?, next_followup = ?, expected_close = ?,
+          owner = ?, probability = ?, division = ?, is_verified = ?, notes = ?, next_followup = ?, expected_close = ?,
           updated_at = datetime('now')
         WHERE id = ?
       `).run(
         company_name, contact_person, email, phone, website, location,
         service, Number(deal_value) || 0, currency, stage, priority, source,
-        owner, Number(probability) || 0, notes, next_followup, expected_close,
+        owner, Number(probability) || 0, division || 'Mobile App Division', verifiedVal, notes, next_followup, expected_close,
         req.params.id
       );
     });
@@ -327,6 +369,92 @@ router.delete('/:id', (req, res) => {
     res.json({ success: true, message: 'Lead deleted successfully' });
   } catch (error) {
     console.error('Error deleting lead:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// PATCH /api/leads/:id/verify - Mark lead as verified and assign to division
+router.patch('/:id/verify', (req, res) => {
+  try {
+    const { is_verified = 1, division } = req.body;
+    const existing = db.prepare('SELECT * FROM leads WHERE id = ?').get(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ success: false, error: 'Lead not found' });
+    }
+
+    const verifiedVal = is_verified ? 1 : 0;
+    const targetDivision = division || existing.division || 'Mobile App Division';
+
+    const tx = db.transaction(() => {
+      db.prepare(`
+        UPDATE leads 
+        SET is_verified = ?, division = ?, updated_at = datetime('now')
+        WHERE id = ?
+      `).run(verifiedVal, targetDivision, req.params.id);
+
+      db.prepare(`
+        INSERT INTO activities (lead_id, type, summary, details)
+        VALUES (?, 'Verification', ?, ?)
+      `).run(
+        req.params.id,
+        verifiedVal ? `Lead Verified (${targetDivision})` : 'Verification Removed',
+        verifiedVal 
+          ? `Lead marked as Verified by engineer and routed to ${targetDivision}.`
+          : `Verification status cleared for this lead.`
+      );
+    });
+
+    tx();
+
+    const updated = db.prepare('SELECT * FROM leads WHERE id = ?').get(req.params.id);
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Error verifying lead:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/leads/bulk-verify - Verify multiple leads and assign division
+router.post('/bulk-verify', (req, res) => {
+  try {
+    const { ids, is_verified = 1, division } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, error: 'Array of lead IDs required' });
+    }
+
+    const verifiedVal = is_verified ? 1 : 0;
+
+    const tx = db.transaction(() => {
+      for (const id of ids) {
+        if (division) {
+          db.prepare(`
+            UPDATE leads 
+            SET is_verified = ?, division = ?, updated_at = datetime('now')
+            WHERE id = ?
+          `).run(verifiedVal, division, id);
+        } else {
+          db.prepare(`
+            UPDATE leads 
+            SET is_verified = ?, updated_at = datetime('now')
+            WHERE id = ?
+          `).run(verifiedVal, id);
+        }
+
+        db.prepare(`
+          INSERT INTO activities (lead_id, type, summary, details)
+          VALUES (?, 'Verification', ?, ?)
+        `).run(
+          id,
+          verifiedVal ? `Lead Verified via Bulk Action (${division || 'Assigned Division'})` : 'Verification Removed via Bulk Action',
+          `Updated by agent in bulk verification operation.`
+        );
+      }
+    });
+
+    tx();
+    res.json({ success: true, count: ids.length, message: `Successfully updated verification for ${ids.length} leads` });
+  } catch (error) {
+    console.error('Error in bulk-verify:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

@@ -14,7 +14,8 @@ import {
   Bot,
   Trash2,
   MoreVertical,
-  Bell
+  Bell,
+  ShieldCheck
 } from 'lucide-react';
 import { CURRENCY_SYMBOLS } from '../constants/crm';
 
@@ -107,10 +108,23 @@ export default function Navbar({
             </button>
 
             <button
+              onClick={() => setCurrentView('divisions')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                currentView === 'divisions'
+                  ? 'bg-cyan-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+              title="Verified Leads Divided by Division"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Divisions</span>
+            </button>
+
+            <button
               onClick={() => setCurrentView('calendar')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 currentView === 'calendar'
-                  ? 'bg-cyan-600 text-white shadow-sm'
+                  ? 'bg-indigo-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
               }`}
               title="Date-Wise & Annual Calendar View"
@@ -282,7 +296,7 @@ export default function Navbar({
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 border-t border-slate-800 backdrop-blur-xl px-1 pt-1.5 safe-area-pb flex items-center justify-around shadow-2xl">
         <button
           onClick={() => setCurrentView('kanban')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all ${
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-xl transition-all ${
             currentView === 'kanban'
               ? 'text-indigo-400 font-bold'
               : 'text-slate-400 hover:text-slate-200'
@@ -293,8 +307,20 @@ export default function Navbar({
         </button>
 
         <button
+          onClick={() => setCurrentView('divisions')}
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-xl transition-all ${
+            currentView === 'divisions'
+              ? 'text-cyan-400 font-bold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4" />
+          <span className="text-[10px]">Divisions</span>
+        </button>
+
+        <button
           onClick={() => setCurrentView('table')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all ${
+          className={`flex flex-col items-center gap-1 py-1 px-1.5 rounded-xl transition-all ${
             currentView === 'table'
               ? 'text-indigo-400 font-bold'
               : 'text-slate-400 hover:text-slate-200'

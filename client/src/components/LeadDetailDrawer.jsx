@@ -4,6 +4,7 @@ import {
   PRIORITIES, 
   SERVICES, 
   OWNERS, 
+  DIVISIONS,
   FORMAT_CURRENCY,
   GET_WHATSAPP_LINK 
 } from '../constants/crm';
@@ -32,7 +33,8 @@ import {
   MessageCircle,
   Briefcase,
   Bell,
-  PhoneMissed
+  PhoneMissed,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function LeadDetailDrawer({
@@ -98,6 +100,43 @@ export default function LeadDetailDrawer({
       }
     } catch (err) {
       console.error('Error updating stage:', err);
+    }
+  };
+
+  // Handle Verification Toggle
+  const handleToggleVerify = async () => {
+    try {
+      const newStatus = !lead.is_verified;
+      const res = await crmApi.verifyLead(leadId, {
+        is_verified: newStatus ? 1 : 0,
+        division: lead.division || 'Mobile App Division'
+      });
+      if (res.success) {
+        setLead(res.data);
+        onUpdateLead(res.data);
+        setStageNotice(newStatus ? `✓ Lead Verified in ${res.data.division}!` : 'Verification removed');
+        setTimeout(() => setStageNotice(null), 5000);
+      }
+    } catch (err) {
+      console.error('Error toggling verification:', err);
+    }
+  };
+
+  // Handle Division Change
+  const handleChangeDivision = async (newDivision) => {
+    try {
+      const res = await crmApi.verifyLead(leadId, {
+        is_verified: lead.is_verified ? 1 : 0,
+        division: newDivision
+      });
+      if (res.success) {
+        setLead(res.data);
+        onUpdateLead(res.data);
+        setStageNotice(`Lead transferred to ${newDivision}`);
+        setTimeout(() => setStageNotice(null), 5000);
+      }
+    } catch (err) {
+      console.error('Error changing division:', err);
     }
   };
 
@@ -259,6 +298,46 @@ export default function LeadDetailDrawer({
                     <X className="w-4 h-4" />
                   </button>
                 </div>
+              </div>
+
+              {/* Division & Verification Control Strip */}
+              <div className="mt-3.5 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400 font-semibold text-[11px] uppercase tracking-wider">Division:</span>
+                  <select
+                    value={lead.division || 'Mobile App Division'}
+                    onChange={(e) => handleChangeDivision(e.target.value)}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 font-medium text-xs focus:ring-1 focus:ring-cyan-500"
+                  >
+                    {DIVISIONS.map(d => (
+                      <option key={d.id} value={d.id}>{d.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 1-Click Verification Toggle Button */}
+                <button
+                  type="button"
+                  onClick={handleToggleVerify}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm ${
+                    lead.is_verified
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 ring-1 ring-emerald-500/30'
+                      : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 ring-1 ring-cyan-500/20'
+                  }`}
+                  title={lead.is_verified ? 'Click to revoke verification' : 'Click to mark as verified lead'}
+                >
+                  {lead.is_verified ? (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>✓ Verified Lead</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Mark as Verified Lead</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Stage Progression Stepper */}

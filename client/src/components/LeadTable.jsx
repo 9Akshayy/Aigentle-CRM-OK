@@ -4,6 +4,7 @@ import {
   PRIORITIES, 
   SERVICES, 
   OWNERS, 
+  DIVISIONS,
   FORMAT_CURRENCY, 
   GET_WHATSAPP_LINK 
 } from '../constants/crm';
@@ -28,7 +29,9 @@ import {
   Sparkles,
   Calendar,
   Bell,
-  PhoneMissed
+  PhoneMissed,
+  ShieldCheck,
+  CheckCircle2
 } from 'lucide-react';
 
 export default function LeadTable({
@@ -45,11 +48,15 @@ export default function LeadTable({
   setSortOrder,
   initialStageFilter = 'all',
   onOpenReminder,
-  onOpenCallNotReceived
+  onOpenCallNotReceived,
+  onVerifyLead,
+  onBulkVerify
 }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkTargetStage, setBulkTargetStage] = useState('');
   const [tableStageFilter, setTableStageFilter] = useState(initialStageFilter || 'all');
+  const [tableDivisionFilter, setTableDivisionFilter] = useState('all');
+  const [tableVerifiedFilter, setTableVerifiedFilter] = useState('all');
   const [tableDateFilter, setTableDateFilter] = useState('all');
 
   // Extract unique dates with lead counts
@@ -114,6 +121,9 @@ export default function LeadTable({
   // 1. Filter by Stage and Date
   const filteredLeads = leads.filter(l => {
     if (tableStageFilter !== 'all' && l.stage !== tableStageFilter) return false;
+    if (tableDivisionFilter !== 'all' && (l.division || 'Mobile App Division') !== tableDivisionFilter) return false;
+    if (tableVerifiedFilter === 'verified' && !l.is_verified) return false;
+    if (tableVerifiedFilter === 'unverified' && l.is_verified) return false;
     if (tableDateFilter !== 'all') {
       let dKey = null;
       if (l.created_at) {
@@ -174,6 +184,29 @@ export default function LeadTable({
                   </option>
                 );
               })}
+            </select>
+
+            {/* Division Filter */}
+            <select
+              value={tableDivisionFilter}
+              onChange={(e) => setTableDivisionFilter(e.target.value)}
+              className="px-2.5 py-1 text-xs bg-slate-800 border border-slate-700 rounded-lg text-cyan-300 font-semibold focus:outline-none focus:ring-1 focus:ring-cyan-500"
+            >
+              <option value="all">All Divisions</option>
+              {DIVISIONS.map(d => (
+                <option key={d.id} value={d.id}>{d.label}</option>
+              ))}
+            </select>
+
+            {/* Verification Filter */}
+            <select
+              value={tableVerifiedFilter}
+              onChange={(e) => setTableVerifiedFilter(e.target.value)}
+              className="px-2.5 py-1 text-xs bg-slate-800 border border-slate-700 rounded-lg text-emerald-300 font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="all">All Verification</option>
+              <option value="verified">✓ Verified Leads Only</option>
+              <option value="unverified">Unverified Leads</option>
             </select>
 
             {/* Date-Wise Filter */}
@@ -305,6 +338,18 @@ export default function LeadTable({
               Apply
             </button>
             <button
+              onClick={() => {
+                if (selectedIds.length === 0) return;
+                if (onBulkVerify) onBulkVerify(selectedIds, 1);
+                setSelectedIds([]);
+              }}
+              className="flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg ml-1 shadow-sm"
+              title="Mark all selected leads as Verified"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Verify Selected
+            </button>
+            <button
               onClick={handleBulkDelete}
               className="flex items-center gap-1 px-3 py-1 bg-rose-600/80 hover:bg-rose-600 text-white font-medium rounded-lg ml-2"
             >
@@ -346,6 +391,18 @@ export default function LeadTable({
                   <div className="flex items-center gap-1">
                     IT Service
                     {sortField === 'service' && (sortOrder === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
+                  </div>
+                </th>
+                <th onClick={() => handleSort('division')} className="py-3 px-4 cursor-pointer hover:text-white">
+                  <div className="flex items-center gap-1">
+                    Division
+                    {sortField === 'division' && (sortOrder === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
+                  </div>
+                </th>
+                <th onClick={() => handleSort('is_verified')} className="py-3 px-4 cursor-pointer hover:text-white text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    Status
+                    {sortField === 'is_verified' && (sortOrder === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
                   </div>
                 </th>
                 <th onClick={() => handleSort('deal_value')} className="py-3 px-4 cursor-pointer hover:text-white text-right">
@@ -391,7 +448,7 @@ export default function LeadTable({
             <tbody className="divide-y divide-slate-800/60">
               {sortedLeads.length === 0 ? (
                 <tr>
-                  <td colSpan="11" className="py-12 text-center text-slate-500">
+                  <td colSpan="13" className="py-12 text-center text-slate-500">
                     <p className="text-sm font-medium">No leads match your selected stage or date filters.</p>
                     {(tableStageFilter !== 'all' || tableDateFilter !== 'all') && (
                       <button
@@ -457,6 +514,37 @@ export default function LeadTable({
                           <Briefcase className="w-3 h-3 shrink-0" />
                           <span className="truncate">{lead.service}</span>
                         </span>
+                      </td>
+
+                      {/* Division */}
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 max-w-[170px] truncate">
+                          {lead.division || 'Mobile App Division'}
+                        </span>
+                      </td>
+
+                      {/* Verified Status */}
+                      <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        {lead.is_verified ? (
+                          <button
+                            type="button"
+                            onClick={() => onVerifyLead && onVerifyLead(lead.id, 0, lead.division)}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors shadow-sm"
+                            title="Verified Lead - Click to toggle"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Verified</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onVerifyLead && onVerifyLead(lead.id, 1, lead.division)}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 hover:text-emerald-300 hover:border-emerald-500/40 hover:bg-emerald-500/10 transition-colors"
+                            title="Click to Mark Lead as Verified"
+                          >
+                            <span>+ Mark Ver.</span>
+                          </button>
+                        )}
                       </td>
 
                       {/* Deal Value */}
@@ -667,13 +755,37 @@ export default function LeadTable({
                 </div>
 
                 {/* Service Tag & Value */}
-                <div className="flex items-center justify-between py-1.5 border-y border-slate-800/80 my-2 text-xs">
-                  <span className="text-[11px] font-medium text-indigo-300 truncate max-w-[180px]">
-                    {lead.service}
-                  </span>
-                  <span className="font-bold text-white">
-                    {FORMAT_CURRENCY(lead.deal_value, currency)}
-                  </span>
+                <div className="flex flex-col gap-1 py-1.5 border-y border-slate-800/80 my-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-medium text-indigo-300 truncate max-w-[180px]">
+                      {lead.service}
+                    </span>
+                    <span className="font-bold text-white">
+                      {FORMAT_CURRENCY(lead.deal_value, currency)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-1 text-[10px]">
+                    <span className="text-slate-400 truncate max-w-[170px]">
+                      📂 {lead.division || 'Mobile App Division'}
+                    </span>
+                    {lead.is_verified ? (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
+                        <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                        Verified
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onVerifyLead) onVerifyLead(lead.id, 1, lead.division);
+                        }}
+                        className="text-slate-400 hover:text-emerald-300 underline"
+                      >
+                        + Verify
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Footer Actions on Mobile */}

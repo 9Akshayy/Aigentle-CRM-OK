@@ -33,6 +33,8 @@ function initSchema() {
       source TEXT DEFAULT 'Website',
       owner TEXT DEFAULT 'Alex Mercer',
       probability INTEGER DEFAULT 20,
+      division TEXT DEFAULT 'Mobile App Division',
+      is_verified INTEGER DEFAULT 0,
       notes TEXT,
       next_followup TEXT,
       expected_close TEXT,
@@ -64,6 +66,19 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_activities_lead ON activities(lead_id);
     CREATE INDEX IF NOT EXISTS idx_tasks_lead ON tasks(lead_id);
   `);
+
+  try {
+    db.exec("ALTER TABLE leads ADD COLUMN is_verified INTEGER DEFAULT 0");
+  } catch (e) {}
+
+  try {
+    db.exec("ALTER TABLE leads ADD COLUMN division TEXT DEFAULT 'Mobile App Division'");
+  } catch (e) {}
+
+  try {
+    db.exec("CREATE INDEX IF NOT EXISTS idx_leads_division ON leads(division)");
+    db.exec("CREATE INDEX IF NOT EXISTS idx_leads_verified ON leads(is_verified)");
+  } catch (e) {}
 }
 
 // Initial seed data representing real-world IT Services leads for Aigentle

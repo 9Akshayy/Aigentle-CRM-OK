@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { crmApi } from '../api/crmApi';
-import { FORMAT_CURRENCY } from '../constants/crm';
+import { FORMAT_CURRENCY, GET_DEFAULT_DIVISION } from '../constants/crm';
 import { 
   Download, 
   Upload, 
@@ -157,6 +157,12 @@ export default function CsvImportExportModal({
           } else {
             obj.source = 'Meta / Google Ads Lead Form';
           }
+
+          // Division & Verification
+          if (!obj.division) {
+            obj.division = GET_DEFAULT_DIVISION(obj.service);
+          }
+          obj.is_verified = obj.is_verified ? 1 : 0;
 
           // Build created_at timestamp from Date + Time
           if (currentDate) {
@@ -315,6 +321,8 @@ export default function CsvImportExportModal({
         'Email': l.email,
         'Phone': l.phone,
         'IT Service': l.service,
+        'Division': l.division || 'Mobile App Division',
+        'Verified': l.is_verified ? 'Yes' : 'No',
         'Deal Value (INR)': l.deal_value || 0,
         'Currency': l.currency || 'INR',
         'Stage': l.stage,
@@ -338,7 +346,7 @@ export default function CsvImportExportModal({
   // Export to CSV
   const handleExportCsv = () => {
     const headers = [
-      'Company Name', 'Contact Person', 'Email', 'Phone', 'IT Service',
+      'Company Name', 'Contact Person', 'Email', 'Phone', 'IT Service', 'Division', 'Verified',
       'Deal Value', 'Currency', 'Stage', 'Priority', 'Source', 'Captured Date', 'Owner', 'Notes'
     ];
 
@@ -354,6 +362,8 @@ export default function CsvImportExportModal({
       escapeCsv(l.email),
       escapeCsv(l.phone),
       escapeCsv(l.service),
+      escapeCsv(l.division || 'Mobile App Division'),
+      escapeCsv(l.is_verified ? 'Verified' : 'Unverified'),
       l.deal_value || 0,
       escapeCsv(l.currency || 'INR'),
       escapeCsv(l.stage),

@@ -46,6 +46,66 @@ export const OWNERS = [
   'Sarah Jenkins'
 ];
 
+export const DIVISIONS = [
+  { 
+    id: 'Mobile App Division', 
+    label: 'Mobile App Division', 
+    short: 'App Dev',
+    color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+    badgeColor: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
+    description: 'iOS, Android, Flutter & React Native Mobile Applications'
+  },
+  { 
+    id: 'Web Development Division', 
+    label: 'Web Development Division', 
+    short: 'Web Dev',
+    color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+    badgeColor: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
+    description: 'Corporate Websites, Portals & Full-Stack Web Applications'
+  },
+  { 
+    id: 'AI & Automation Division', 
+    label: 'AI & Automation Division', 
+    short: 'AI & ML',
+    color: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+    badgeColor: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+    description: 'Generative AI, LLMs, Computer Vision & Process Automation'
+  },
+  { 
+    id: 'Custom Software Division', 
+    label: 'Custom Software Division', 
+    short: 'Software',
+    color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    badgeColor: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+    description: 'Enterprise ERP, SaaS Platforms & Custom Backend Systems'
+  },
+  { 
+    id: 'Cloud & DevOps Division', 
+    label: 'Cloud & DevOps Division', 
+    short: 'Cloud',
+    color: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    badgeColor: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+    description: 'AWS / GCP / Azure Cloud Architecture & Infrastructure'
+  }
+];
+
+export const GET_DEFAULT_DIVISION = (serviceName = '') => {
+  const s = (serviceName || '').toLowerCase();
+  if (s.includes('mobile') || s.includes('app') || s.includes('android') || s.includes('ios') || s.includes('flutter')) {
+    return 'Mobile App Division';
+  }
+  if (s.includes('website') || s.includes('web') || s.includes('frontend') || s.includes('portal')) {
+    return 'Web Development Division';
+  }
+  if (s.includes('ai') || s.includes('machine') || s.includes('bot') || s.includes('intelligence')) {
+    return 'AI & Automation Division';
+  }
+  if (s.includes('cloud') || s.includes('devops') || s.includes('cyber') || s.includes('staffing')) {
+    return 'Cloud & DevOps Division';
+  }
+  return 'Custom Software Division';
+};
+
 export const CURRENCY_SYMBOLS = {
   INR: '₹',
   USD: '$',

@@ -5,9 +5,11 @@ import {
   SERVICES, 
   SOURCES, 
   OWNERS, 
-  CURRENCY_SYMBOLS 
+  CURRENCY_SYMBOLS,
+  DIVISIONS,
+  GET_DEFAULT_DIVISION
 } from '../constants/crm';
-import { X, Building2, User, DollarSign, Calendar, Sparkles } from 'lucide-react';
+import { X, Building2, User, DollarSign, Calendar, Sparkles, ShieldCheck } from 'lucide-react';
 
 export default function LeadFormModal({ isOpen, onClose, onSave, currency }) {
   const [formData, setFormData] = useState({
@@ -18,6 +20,8 @@ export default function LeadFormModal({ isOpen, onClose, onSave, currency }) {
     website: '',
     location: '',
     service: SERVICES[0],
+    division: GET_DEFAULT_DIVISION(SERVICES[0]),
+    is_verified: 0,
     deal_value: '',
     currency: currency || 'INR',
     stage: 'New',
@@ -161,16 +165,34 @@ export default function LeadFormModal({ isOpen, onClose, onSave, currency }) {
             </div>
           </div>
 
-          {/* Row 3: Service & Estimated Deal Value */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Row 3: Service, Division & Estimated Deal Value */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="text-slate-300 font-medium block mb-1">IT Service Required</label>
               <select
                 value={formData.service}
-                onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                onChange={(e) => {
+                  const s = e.target.value;
+                  setFormData({
+                    ...formData,
+                    service: s,
+                    division: GET_DEFAULT_DIVISION(s)
+                  });
+                }}
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 {SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-slate-300 font-medium block mb-1">Assigned Division</label>
+              <select
+                value={formData.division || 'Mobile App Division'}
+                onChange={(e) => setFormData({ ...formData, division: e.target.value })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              >
+                {DIVISIONS.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
               </select>
             </div>
 

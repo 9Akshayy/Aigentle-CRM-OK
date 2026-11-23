@@ -70,6 +70,24 @@ export const crmApi = {
     return res.json();
   },
 
+  async verifyLead(id, data = {}) {
+    const res = await fetch(`${API_BASE}/leads/${id}/verify`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  async bulkVerifyLeads(ids, is_verified = 1, division) {
+    const res = await fetch(`${API_BASE}/leads/bulk-verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, is_verified, division }),
+    });
+    return res.json();
+  },
+
   async importLeads(leads) {
     const res = await fetch(`${API_BASE}/leads/import`, {
       method: 'POST',
