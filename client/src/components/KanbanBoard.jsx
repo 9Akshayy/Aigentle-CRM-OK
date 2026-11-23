@@ -27,7 +27,8 @@ import {
   Eye,
   Layers,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Bell
 } from 'lucide-react';
 
 export default function KanbanBoard({
@@ -41,7 +42,8 @@ export default function KanbanBoard({
   setSelectedPriority,
   selectedOwner,
   setSelectedOwner,
-  initialStageFilter = 'all'
+  initialStageFilter = 'all',
+  onOpenReminder
 }) {
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
@@ -438,7 +440,7 @@ export default function KanbanBoard({
       {/* Kanban Stages Grid */}
       <div 
         ref={boardContainerRef}
-        className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory select-none"
+        className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory select-none touch-scroll"
       >
         {stagesToRender.map((stage) => {
           const stageLeads = filteredLeadsByDate.filter(l => l.stage === stage.id);
@@ -625,6 +627,19 @@ export default function KanbanBoard({
                           </div>
 
                           <div className="flex items-center gap-1 text-slate-400">
+                            {/* Send Client Reminder */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onOpenReminder) onOpenReminder(lead);
+                              }}
+                              className="p-1 hover:text-amber-300 hover:bg-slate-700/80 rounded transition-colors text-amber-400/90"
+                              title={`Send Client Reminder to ${lead.contact_person}`}
+                            >
+                              <Bell className="w-3.5 h-3.5" />
+                            </button>
+
                             {lead.phone && (
                               <a
                                 href={GET_WHATSAPP_LINK(lead.phone, `Hi ${lead.contact_person}, this is regarding your inquiry for ${lead.service} with Aigentle IT Services.`)}

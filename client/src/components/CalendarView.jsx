@@ -25,7 +25,8 @@ import {
   Sparkles, 
   Clock, 
   Layers,
-  ArrowRight
+  ArrowRight,
+  Bell
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -45,7 +46,8 @@ export default function CalendarView({
   onLeadClick,
   onStageChange,
   currency,
-  onOpenNewLead
+  onOpenNewLead,
+  onOpenReminder
 }) {
   // Find the most recent date with leads to set intelligent default year & month
   const initialDate = useMemo(() => {
@@ -736,6 +738,18 @@ export default function CalendarView({
 
                         {/* Direct Communication Buttons */}
                         <div className="flex items-center gap-1 text-slate-400" onClick={(e) => e.stopPropagation()}>
+                          {/* Send Client Reminder Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (onOpenReminder) onOpenReminder(lead);
+                            }}
+                            className="p-1 rounded hover:bg-slate-800 text-amber-400 hover:text-amber-300 transition-colors"
+                            title={`Send Client Reminder to ${lead.contact_person}`}
+                          >
+                            <Bell className="w-3.5 h-3.5" />
+                          </button>
+
                           {lead.phone && (
                             <a
                               href={GET_WHATSAPP_LINK(lead.phone, `Hi ${lead.contact_person}, this is regarding your inquiry for ${lead.service} with Aigentle IT Services.`)}

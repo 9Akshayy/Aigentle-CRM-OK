@@ -12,6 +12,7 @@ import AnalyticsView from './components/AnalyticsView';
 import TasksView from './components/TasksView';
 import EmailTemplateModal from './components/EmailTemplateModal';
 import CsvImportExportModal from './components/CsvImportExportModal';
+import SendReminderModal from './components/SendReminderModal';
 import { STAGES } from './constants/crm';
 
 export default function App() {
@@ -42,6 +43,13 @@ export default function App() {
   const [isImportExportOpen, setIsImportExportOpen] = useState(false);
   const [isEmailTemplateOpen, setIsEmailTemplateOpen] = useState(false);
   const [leadForEmailTemplate, setLeadForEmailTemplate] = useState(null);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
+  const [leadForReminder, setLeadForReminder] = useState(null);
+
+  const handleOpenReminder = (lead) => {
+    setLeadForReminder(lead);
+    setIsReminderModalOpen(true);
+  };
 
   // Fetch leads and pipeline statistics
   const loadData = async () => {
@@ -253,6 +261,7 @@ export default function App() {
                 selectedOwner={selectedOwner}
                 setSelectedOwner={setSelectedOwner}
                 initialStageFilter={targetStageForKanban}
+                onOpenReminder={handleOpenReminder}
               />
             )}
 
@@ -270,6 +279,7 @@ export default function App() {
                 sortOrder={sortOrder}
                 setSortOrder={setSortOrder}
                 initialStageFilter={targetStageForKanban}
+                onOpenReminder={handleOpenReminder}
               />
             )}
 
@@ -280,6 +290,7 @@ export default function App() {
                 onStageChange={handleStageChange}
                 currency={currency}
                 onOpenNewLead={() => setIsNewLeadModalOpen(true)}
+                onOpenReminder={handleOpenReminder}
               />
             )}
 
@@ -299,6 +310,7 @@ export default function App() {
                 leads={leads}
                 onOpenLead={(lead) => setSelectedLeadForDrawer(lead)}
                 onRefreshStats={loadData}
+                onOpenReminder={handleOpenReminder}
               />
             )}
 
@@ -332,6 +344,7 @@ export default function App() {
             setTargetStageForKanban(stage);
             setCurrentView('kanban');
           }}
+          onOpenReminder={handleOpenReminder}
         />
       )}
 
@@ -357,6 +370,15 @@ export default function App() {
         onClose={() => setIsEmailTemplateOpen(false)}
         initialLead={leadForEmailTemplate}
         leads={leads}
+        currency={currency}
+      />
+
+      {/* 5. Client Follow-up & Reminder Dispatch Modal */}
+      <SendReminderModal
+        isOpen={isReminderModalOpen}
+        onClose={() => setIsReminderModalOpen(false)}
+        lead={leadForReminder}
+        onReminderSent={loadData}
         currency={currency}
       />
 

@@ -30,7 +30,8 @@ import {
   Sparkles,
   ExternalLink,
   MessageCircle,
-  Briefcase
+  Briefcase,
+  Bell
 } from 'lucide-react';
 
 export default function LeadDetailDrawer({
@@ -40,7 +41,8 @@ export default function LeadDetailDrawer({
   onDeleteLead,
   onOpenEmailTemplate,
   currency,
-  onViewStageInBoard
+  onViewStageInBoard,
+  onOpenReminder
 }) {
   const [lead, setLead] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -194,7 +196,7 @@ export default function LeadDetailDrawer({
       />
 
       {/* Drawer Panel */}
-      <div className="relative w-full max-w-2xl bg-slate-950 border-l border-slate-800 h-full flex flex-col shadow-2xl z-10 overflow-y-auto">
+      <div className="relative w-full max-w-2xl bg-slate-950 border-l border-slate-800 h-full flex flex-col shadow-2xl z-10 overflow-y-auto safe-area-pb touch-scroll">
         
         {loading || !lead ? (
           <div className="flex-1 flex items-center justify-center">
@@ -314,26 +316,18 @@ export default function LeadDetailDrawer({
               </div>
 
               {/* Quick Communication Action Bar */}
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-800/80">
-                {lead.email && (
-                  <button
-                    onClick={() => onOpenEmailTemplate(lead)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Generate IT Proposal Email
-                  </button>
-                )}
-
-                {lead.phone && (
-                  <a
-                    href={`tel:${lead.phone}`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700"
-                  >
-                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                    Call
-                  </a>
-                )}
+              <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-slate-800/80">
+                {/* 1-Click Send Client Reminder */}
+                <button
+                  onClick={() => {
+                    if (onOpenReminder) onOpenReminder(lead);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold border border-amber-500/40 shadow-sm transition-all"
+                  title="Send WhatsApp, Email, or SMS Reminder"
+                >
+                  <Bell className="w-3.5 h-3.5 text-amber-400" />
+                  Send Client Reminder
+                </button>
 
                 {lead.phone && (
                   <a
@@ -344,6 +338,26 @@ export default function LeadDetailDrawer({
                   >
                     <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
                     WhatsApp Chat
+                  </a>
+                )}
+
+                {lead.email && (
+                  <button
+                    onClick={() => onOpenEmailTemplate(lead)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-all"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Generate Proposal Email
+                  </button>
+                )}
+
+                {lead.phone && (
+                  <a
+                    href={`tel:${lead.phone}`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                    Call
                   </a>
                 )}
 

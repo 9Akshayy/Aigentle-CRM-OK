@@ -26,7 +26,8 @@ import {
   Filter, 
   Layers, 
   Sparkles,
-  Calendar
+  Calendar,
+  Bell
 } from 'lucide-react';
 
 export default function LeadTable({
@@ -41,7 +42,8 @@ export default function LeadTable({
   setSortField,
   sortOrder,
   setSortOrder,
-  initialStageFilter = 'all'
+  initialStageFilter = 'all',
+  onOpenReminder
 }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkTargetStage, setBulkTargetStage] = useState('');
@@ -311,8 +313,8 @@ export default function LeadTable({
         </div>
       )}
 
-      {/* Main Table Container */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm overflow-hidden shadow-xl">
+      {/* Main Table Container (Desktop / Tablet) */}
+      <div className="hidden md:block rounded-xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -534,6 +536,17 @@ export default function LeadTable({
                       {/* Actions */}
                       <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1.5">
+                          {/* Send Client Reminder Button */}
+                          <button
+                            onClick={() => {
+                              if (onOpenReminder) onOpenReminder(lead);
+                            }}
+                            className="p-1 rounded hover:bg-slate-700 text-amber-400 hover:text-amber-300 transition-colors"
+                            title={`Send Client Reminder to ${lead.contact_person}`}
+                          >
+                            <Bell className="w-3.5 h-3.5" />
+                          </button>
+
                           {lead.phone && (
                             <a
                               href={GET_WHATSAPP_LINK(lead.phone, `Hi ${lead.contact_person}, this is regarding your inquiry for ${lead.service} with Aigentle IT Services.`)}
@@ -591,6 +604,121 @@ export default function LeadTable({
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Card List (Optimized for Android & iPhone) */}
+      <div className="md:hidden space-y-3 pb-6">
+        {sortedLeads.length === 0 ? (
+          <div className="p-8 text-center text-slate-500 bg-slate-900/40 rounded-xl border border-slate-800">
+            <p className="text-xs font-medium">No leads match your selected filters.</p>
+          </div>
+        ) : (
+          sortedLeads.map((lead) => {
+            const isSelected = selectedIds.includes(lead.id);
+            const stageConfig = STAGES.find(s => s.id === lead.stage) || STAGES[0];
+            const priorityConfig = PRIORITIES.find(p => p.id === lead.priority) || PRIORITIES[2];
+
+            return (
+              <div
+                key={lead.id}
+                onClick={() => onLeadClick(lead)}
+                className={`p-3.5 rounded-xl border bg-slate-900/80 shadow-md transition-all active:scale-[0.99] ${
+                  isSelected ? 'border-indigo-500 bg-indigo-950/20' : 'border-slate-800'
+                }`}
+              >
+                {/* Header: Checkbox + Company + Priority */}
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => toggleSelectLead(lead.id, e)}
+                      className="text-slate-400 hover:text-indigo-400 p-0.5"
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="w-4 h-4 text-indigo-400" />
+                      ) : (
+                        <Square className="w-4 h-4" />
+                      )}
+                    </button>
+                    <div>
+                      <h4 className="font-bold text-sm text-white line-clamp-1">
+                        {lead.company_name}
+                      </h4>
+                      <p className="text-xs text-slate-400">{lead.contact_person}</p>
+                    </div>
+                  </div>
+
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border shrink-0 ${priorityConfig.color}`}>
+                    {lead.priority}
+                  </span>
+                </div>
+
+                {/* Service Tag & Value */}
+                <div className="flex items-center justify-between py-1.5 border-y border-slate-800/80 my-2 text-xs">
+                  <span className="text-[11px] font-medium text-indigo-300 truncate max-w-[180px]">
+                    {lead.service}
+                  </span>
+                  <span className="font-bold text-white">
+                    {FORMAT_CURRENCY(lead.deal_value, currency)}
+                  </span>
+                </div>
+
+                {/* Footer Actions on Mobile */}
+                <div className="flex items-center justify-between gap-1 pt-1" onClick={(e) => e.stopPropagation()}>
+                  {/* Stage Dropdown */}
+                  <select
+                    value={lead.stage}
+                    onChange={(e) => onStageChange(lead.id, e.target.value)}
+                    className="text-[11px] bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-slate-200"
+                  >
+                    {STAGES.map(s => (
+                      <option key={s.id} value={s.id}>{s.label}</option>
+                    ))}
+                  </select>
+
+                  {/* Quick Action Buttons */}
+                  <div className="flex items-center gap-1.5">
+                    {/* Send Reminder */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onOpenReminder) onOpenReminder(lead);
+                      }}
+                      className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1"
+                      title="Send Client Reminder"
+                    >
+                      <Bell className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-[10px]">Reminder</span>
+                    </button>
+
+                    {lead.phone && (
+                      <a
+                        href={GET_WHATSAPP_LINK(lead.phone, `Hi ${lead.contact_person}, this is regarding your inquiry for ${lead.service} with Aigentle IT Services.`)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-500/30"
+                        title="WhatsApp"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+
+                    {lead.phone && (
+                      <a
+                        href={`tel:${lead.phone}`}
+                        className="p-1.5 rounded-lg bg-slate-800 text-blue-400 border border-slate-700"
+                        title="Call"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

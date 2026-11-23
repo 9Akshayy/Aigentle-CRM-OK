@@ -13,11 +13,12 @@ import {
   Trash2,
   Building2,
   User,
-  Filter
+  Filter,
+  Bell
 } from 'lucide-react';
 import { PRIORITIES, GET_WHATSAPP_LINK } from '../constants/crm';
 
-export default function TasksView({ onOpenLead, leads, onRefreshStats }) {
+export default function TasksView({ onOpenLead, leads, onRefreshStats, onOpenReminder }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterTab, setFilterTab] = useState('pending'); // 'pending', 'overdue', 'today', 'completed'
@@ -288,6 +289,28 @@ export default function TasksView({ onOpenLead, leads, onRefreshStats }) {
                   </div>
 
                   <div className="flex items-center gap-1.5">
+                    {/* Send Client Reminder */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const matchingLead = leads?.find(l => l.id === t.lead_id) || {
+                          id: t.lead_id,
+                          contact_person: t.contact_person,
+                          company_name: t.company_name,
+                          phone: t.phone,
+                          email: t.email,
+                          service: t.service,
+                          deal_value: 0
+                        };
+                        if (onOpenReminder) onOpenReminder(matchingLead);
+                      }}
+                      className="p-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 flex items-center gap-1"
+                      title="Send Client Reminder"
+                    >
+                      <Bell className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-[10px] hidden sm:inline font-semibold">Reminder</span>
+                    </button>
+
                     {t.phone && (
                       <a
                         href={GET_WHATSAPP_LINK(t.phone, `Hi ${t.contact_person}, following up on your inquiry with Aigentle IT Services.`)}

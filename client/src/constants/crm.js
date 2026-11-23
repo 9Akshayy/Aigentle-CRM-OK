@@ -66,3 +66,21 @@ export const GET_WHATSAPP_LINK = (phone, text = '') => {
   const msg = text ? `?text=${encodeURIComponent(text)}` : '';
   return `https://wa.me/${clean}${msg}`;
 };
+
+export const GET_SMS_LINK = (phone, text = '') => {
+  if (!phone) return null;
+  const clean = phone.replace(/[^0-9+]/g, '');
+  const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+  const separator = isIOS ? '&' : '?';
+  return text ? `sms:${clean}${separator}body=${encodeURIComponent(text)}` : `sms:${clean}`;
+};
+
+export const GET_EMAIL_LINK = (email, subject = '', body = '') => {
+  if (!email) return null;
+  const params = [];
+  if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+  if (body) params.push(`body=${encodeURIComponent(body)}`);
+  const query = params.length > 0 ? `?${params.join('&')}` : '';
+  return `mailto:${email}${query}`;
+};
+
