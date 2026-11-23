@@ -7,6 +7,7 @@ import KanbanBoard from './components/KanbanBoard';
 import LeadTable from './components/LeadTable';
 import LeadDetailDrawer from './components/LeadDetailDrawer';
 import LeadFormModal from './components/LeadFormModal';
+import CalendarView from './components/CalendarView';
 import AnalyticsView from './components/AnalyticsView';
 import TasksView from './components/TasksView';
 import EmailTemplateModal from './components/EmailTemplateModal';
@@ -269,6 +270,16 @@ export default function App() {
                 sortOrder={sortOrder}
                 setSortOrder={setSortOrder}
                 initialStageFilter={targetStageForKanban}
+              />
+            )}
+
+            {currentView === 'calendar' && (
+              <CalendarView
+                leads={leads}
+                onLeadClick={(lead) => setSelectedLeadForDrawer(lead)}
+                onStageChange={handleStageChange}
+                currency={currency}
+                onOpenNewLead={() => setIsNewLeadModalOpen(true)}
               />
             )}
 

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   STAGES, 
   PRIORITIES, 
   SERVICES, 
   OWNERS, 
-  FORMAT_CURRENCY,
+  FORMAT_CURRENCY, 
   GET_WHATSAPP_LINK 
 } from '../constants/crm';
 import { 
@@ -15,17 +15,18 @@ import {
   Edit3, 
   Phone, 
   Mail, 
-  MessageCircle,
+  MessageCircle, 
   ExternalLink, 
   ChevronUp, 
   ChevronDown, 
   CheckSquare, 
   Square, 
-  AlertTriangle,
-  Briefcase,
-  Filter,
-  Layers,
-  Sparkles
+  AlertTriangle, 
+  Briefcase, 
+  Filter, 
+  Layers, 
+  Sparkles,
+  Calendar
 } from 'lucide-react';
 
 export default function LeadTable({
@@ -45,6 +46,25 @@ export default function LeadTable({
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkTargetStage, setBulkTargetStage] = useState('');
   const [tableStageFilter, setTableStageFilter] = useState(initialStageFilter || 'all');
+  const [tableDateFilter, setTableDateFilter] = useState('all');
+
+  // Extract unique dates with lead counts
+  const availableDates = useMemo(() => {
+    const map = {};
+    leads.forEach(l => {
+      let dKey = null;
+      if (l.created_at) {
+        const d = new Date(l.created_at);
+        if (!isNaN(d.getTime())) {
+          dKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+      }
+      if (dKey) {
+        map[dKey] = (map[dKey] || 0) + 1;
+      }
+    });
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [leads]);
 
   const toggleSelectAll = (filteredLeads) => {
     if (selectedIds.length === filteredLeads.length && filteredLeads.length > 0) {
@@ -87,14 +107,24 @@ export default function LeadTable({
     }
   };
 
-  // 1. Filter by Stage if selected
-  const filteredByStage = leads.filter(l => {
-    if (tableStageFilter === 'all') return true;
-    return l.stage === tableStageFilter;
+  // 1. Filter by Stage and Date
+  const filteredLeads = leads.filter(l => {
+    if (tableStageFilter !== 'all' && l.stage !== tableStageFilter) return false;
+    if (tableDateFilter !== 'all') {
+      let dKey = null;
+      if (l.created_at) {
+        const d = new Date(l.created_at);
+        if (!isNaN(d.getTime())) {
+          dKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+      }
+      if (dKey !== tableDateFilter) return false;
+    }
+    return true;
   });
 
   // 2. Sort leads
-  const sortedLeads = [...filteredByStage].sort((a, b) => {
+  const sortedLeads = [...filteredLeads].sort((a, b) => {
     let aVal = a[sortField];
     let bVal = b[sortField];
 
@@ -124,7 +154,8 @@ export default function LeadTable({
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Stage Filter */}
             <select
               value={tableStageFilter}
               onChange={(e) => setTableStageFilter(e.target.value)}
@@ -141,12 +172,36 @@ export default function LeadTable({
               })}
             </select>
 
-            {tableStageFilter !== 'all' && (
-              <button
-                onClick={() => setTableStageFilter('all')}
-                className="text-xs text-cyan-400 hover:text-cyan-300 underline font-medium"
+            {/* Date-Wise Filter */}
+            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-700">
+              <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+              <select
+                value={tableDateFilter}
+                onChange={(e) => setTableDateFilter(e.target.value)}
+                className="px-2.5 py-1 text-xs bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-medium"
               >
-                Clear Filter
+                <option value="all">All Dates ({leads.length})</option>
+                {availableDates.map(([dKey, cnt]) => {
+                  const [y, m, d] = dKey.split('-');
+                  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                  return (
+                    <option key={dKey} value={dKey}>
+                      {d} {monthNames[Number(m)-1]} {y} ({cnt} leads)
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            {(tableStageFilter !== 'all' || tableDateFilter !== 'all') && (
+              <button
+                onClick={() => {
+                  setTableStageFilter('all');
+                  setTableDateFilter('all');
+                }}
+                className="text-xs text-cyan-400 hover:text-cyan-300 underline font-medium ml-1"
+              >
+                Reset Filters
               </button>
             )}
           </div>
@@ -313,6 +368,12 @@ export default function LeadTable({
                     {sortField === 'next_followup' && (sortOrder === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
                   </div>
                 </th>
+                <th onClick={() => handleSort('created_at')} className="py-3 px-4 cursor-pointer hover:text-white">
+                  <div className="flex items-center gap-1">
+                    Captured Date
+                    {sortField === 'created_at' && (sortOrder === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}
+                  </div>
+                </th>
                 <th onClick={() => handleSort('owner')} className="py-3 px-4 cursor-pointer hover:text-white">
                   <div className="flex items-center gap-1">
                     Owner
@@ -326,14 +387,17 @@ export default function LeadTable({
             <tbody className="divide-y divide-slate-800/60">
               {sortedLeads.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="py-12 text-center text-slate-500">
-                    <p className="text-sm font-medium">No leads found in stage "{tableStageFilter}".</p>
-                    {tableStageFilter !== 'all' && (
+                  <td colSpan="11" className="py-12 text-center text-slate-500">
+                    <p className="text-sm font-medium">No leads match your selected stage or date filters.</p>
+                    {(tableStageFilter !== 'all' || tableDateFilter !== 'all') && (
                       <button
-                        onClick={() => setTableStageFilter('all')}
+                        onClick={() => {
+                          setTableStageFilter('all');
+                          setTableDateFilter('all');
+                        }}
                         className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 underline"
                       >
-                        View all {leads.length} leads
+                        Reset filters to view all {leads.length} leads
                       </button>
                     )}
                   </td>
@@ -450,6 +514,16 @@ export default function LeadTable({
                         ) : (
                           <span className="text-slate-600 text-[11px]">—</span>
                         )}
+                      </td>
+
+                      {/* Captured Date */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-slate-300 font-medium text-[11px]">
+                          <Calendar className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                          <span>
+                            {lead.created_at ? new Date(lead.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Owner */}

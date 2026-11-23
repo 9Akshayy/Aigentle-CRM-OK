@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   STAGES, 
   PRIORITIES, 
@@ -50,6 +50,40 @@ export default function KanbanBoard({
   const [activeStageFilter, setActiveStageFilter] = useState(initialStageFilter || 'all');
   const [viewMode, setViewMode] = useState('all'); // 'all' (horizontal board) | 'single' (focused column)
   const [highlightedStage, setHighlightedStage] = useState(null);
+  const [kanbanDateFilter, setKanbanDateFilter] = useState('all');
+
+  // Extract unique dates with counts
+  const availableDates = useMemo(() => {
+    const map = {};
+    leads.forEach(l => {
+      let dKey = null;
+      if (l.created_at) {
+        const d = new Date(l.created_at);
+        if (!isNaN(d.getTime())) {
+          dKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+      }
+      if (dKey) {
+        map[dKey] = (map[dKey] || 0) + 1;
+      }
+    });
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [leads]);
+
+  // Filter leads by date if active
+  const filteredLeadsByDate = useMemo(() => {
+    if (kanbanDateFilter === 'all') return leads;
+    return leads.filter(l => {
+      let dKey = null;
+      if (l.created_at) {
+        const d = new Date(l.created_at);
+        if (!isNaN(d.getTime())) {
+          dKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+      }
+      return dKey === kanbanDateFilter;
+    });
+  }, [leads, kanbanDateFilter]);
 
   // Toast feedback
   const [toast, setToast] = useState(null);
@@ -325,6 +359,27 @@ export default function KanbanBoard({
               <option key={o} value={o}>{o}</option>
             ))}
           </select>
+
+          {/* Date Filter */}
+          <div className="flex items-center gap-1 pl-1.5 border-l border-slate-700">
+            <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+            <select
+              value={kanbanDateFilter}
+              onChange={(e) => setKanbanDateFilter(e.target.value)}
+              className="px-2.5 py-1 text-xs bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-medium"
+            >
+              <option value="all">All Dates ({leads.length})</option>
+              {availableDates.map(([dKey, cnt]) => {
+                const [y, m, d] = dKey.split('-');
+                const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                return (
+                  <option key={dKey} value={dKey}>
+                    {d} {monthNames[Number(m)-1]} {y} ({cnt} leads)
+                  </option>
+                );
+              })}
+            </select>
+          </div>
         </div>
 
         {/* Mode indicator & Total leads count */}
@@ -335,8 +390,16 @@ export default function KanbanBoard({
               <span>Focusing: {activeStageFilter}</span>
             </div>
           )}
+          {kanbanDateFilter !== 'all' && (
+            <button
+              onClick={() => setKanbanDateFilter('all')}
+              className="text-xs text-cyan-400 hover:text-cyan-300 underline font-medium"
+            >
+              Clear Date Filter
+            </button>
+          )}
           <div>
-            Showing <span className="font-semibold text-white">{leads.length}</span> leads in pipeline
+            Showing <span className="font-semibold text-white">{filteredLeadsByDate.length}</span> leads in pipeline
           </div>
         </div>
       </div>
@@ -378,7 +441,7 @@ export default function KanbanBoard({
         className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory select-none"
       >
         {stagesToRender.map((stage) => {
-          const stageLeads = leads.filter(l => l.stage === stage.id);
+          const stageLeads = filteredLeadsByDate.filter(l => l.stage === stage.id);
           const stageTotalValue = stageLeads.reduce((sum, l) => sum + (Number(l.deal_value) || 0), 0);
           const isOver = dragOverStage === stage.id;
           const isHighlighted = highlightedStage === stage.id;
@@ -491,6 +554,14 @@ export default function KanbanBoard({
                             {lead.probability}% Prob
                           </span>
                         </div>
+
+                        {/* Date Captured */}
+                        {lead.created_at && (
+                          <div className="flex items-center gap-1.5 py-1 text-[10px] text-slate-400 border-t border-slate-700/40">
+                            <Calendar className="w-3 h-3 text-cyan-400 shrink-0" />
+                            <span>Captured: {new Date(lead.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                          </div>
+                        )}
 
                         {/* Footer: Follow-up & Owner */}
                         <div className="flex items-center justify-between text-[11px] pt-1 text-slate-400">

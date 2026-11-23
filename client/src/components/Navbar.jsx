@@ -2,6 +2,7 @@ import React from 'react';
 import { 
   Columns3, 
   Table, 
+  Calendar,
   BarChart3, 
   CalendarClock, 
   FileText, 
@@ -99,6 +100,19 @@ export default function Navbar({
             >
               <Table className="w-3.5 h-3.5" />
               <span className="hidden lg:inline">Leads Table</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentView('calendar')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                currentView === 'calendar'
+                  ? 'bg-cyan-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+              title="Date-Wise & Annual Calendar View"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Calendar</span>
             </button>
 
             <button
@@ -236,7 +250,7 @@ export default function Navbar({
 
         <button
           onClick={() => setCurrentView('table')}
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all ${
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
             currentView === 'table'
               ? 'text-indigo-400 font-bold'
               : 'text-slate-400 hover:text-slate-200'
@@ -244,6 +258,18 @@ export default function Navbar({
         >
           <Table className="w-4 h-4" />
           <span className="text-[10px]">Table</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentView('calendar')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all ${
+            currentView === 'calendar'
+              ? 'text-cyan-400 font-bold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          <span className="text-[10px]">Calendar</span>
         </button>
 
         <button
