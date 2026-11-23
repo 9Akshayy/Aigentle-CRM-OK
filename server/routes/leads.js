@@ -379,45 +379,92 @@ router.post('/import', (req, res) => {
       return res.status(400).json({ success: false, error: 'Valid leads array required' });
     }
 
+    const checkExisting = db.prepare(`
+      SELECT id, stage FROM leads 
+      WHERE (phone != '' AND phone IS NOT NULL AND phone = ?) 
+         OR (email != '' AND email IS NOT NULL AND email = ?)
+      LIMIT 1
+    `);
+
+    const updateExistingLead = db.prepare(`
+      UPDATE leads SET
+        company_name = ?, contact_person = ?, service = ?, deal_value = ?,
+        currency = ?, priority = ?, source = ?, notes = ?,
+        created_at = COALESCE(?, created_at),
+        updated_at = datetime('now')
+      WHERE id = ?
+    `);
+
     const insertLead = db.prepare(`
       INSERT INTO leads (
         company_name, contact_person, email, phone, website, location,
         service, deal_value, currency, stage, priority, source,
         owner, probability, notes, next_followup, expected_close,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     `);
 
     let importedCount = 0;
+    let updatedCount = 0;
+
     const tx = db.transaction(() => {
       for (const item of leads) {
         if (!item.company_name || !item.contact_person) continue;
 
-        insertLead.run(
-          item.company_name,
-          item.contact_person,
-          item.email || '',
-          item.phone || '',
-          item.website || '',
-          item.location || '',
-          item.service || 'Custom Software Development',
-          Number(item.deal_value) || 0,
-          item.currency || 'INR',
-          item.stage || 'New',
-          item.priority || 'Medium',
-          item.source || 'CSV Import',
-          item.owner || 'Alex Mercer',
-          Number(item.probability) || 20,
-          item.notes || 'Imported via CSV',
-          item.next_followup || '',
-          item.expected_close || ''
-        );
-        importedCount++;
+        const phoneVal = item.phone ? item.phone.trim() : '';
+        const emailVal = item.email ? item.email.trim() : '';
+        const existing = (phoneVal || emailVal) ? checkExisting.get(phoneVal, emailVal) : null;
+
+        const createdAtVal = item.created_at || null;
+
+        if (existing) {
+          updateExistingLead.run(
+            item.company_name,
+            item.contact_person,
+            item.service || 'Custom Software Development',
+            Number(item.deal_value) || 0,
+            item.currency || 'INR',
+            item.priority || 'Medium',
+            item.source || 'Ad Campaign / Form',
+            item.notes || '',
+            createdAtVal,
+            existing.id
+          );
+          updatedCount++;
+        } else {
+          insertLead.run(
+            item.company_name,
+            item.contact_person,
+            emailVal,
+            phoneVal,
+            item.website || '',
+            item.location || '',
+            item.service || 'Custom Software Development',
+            Number(item.deal_value) || 0,
+            item.currency || 'INR',
+            item.stage || 'New',
+            item.priority || 'Medium',
+            item.source || 'CSV/Excel Import',
+            item.owner || 'Alex Mercer',
+            Number(item.probability) || 20,
+            item.notes || 'Imported via CSV/Excel',
+            item.next_followup || '',
+            item.expected_close || '',
+            createdAtVal || new Date().toISOString().slice(0, 19).replace('T', ' ')
+          );
+          importedCount++;
+        }
       }
     });
 
     tx();
-    res.json({ success: true, count: importedCount, message: `Successfully imported ${importedCount} leads` });
+    res.json({ 
+      success: true, 
+      count: importedCount + updatedCount, 
+      insertedCount: importedCount, 
+      updatedCount, 
+      message: `Processed ${importedCount + updatedCount} leads (${importedCount} new, ${updatedCount} updated)` 
+    });
   } catch (error) {
     console.error('Error importing leads:', error);
     res.status(500).json({ success: false, error: error.message });

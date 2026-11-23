@@ -9,8 +9,11 @@ client/dist/
 .env
 .env.local
 
-# Database (keep db local or back up separately)
-# data/crm.db
+# Database
+data/*.db-shm
+data/*.db-wal
+# data/crm.db (kept tracked for initial database state)
+
 
 # OS / Logs
 npm-debug.log*
