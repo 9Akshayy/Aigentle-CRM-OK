@@ -14,11 +14,12 @@ import {
   Building2,
   User,
   Filter,
-  Bell
+  Bell,
+  PhoneMissed
 } from 'lucide-react';
 import { PRIORITIES, GET_WHATSAPP_LINK } from '../constants/crm';
 
-export default function TasksView({ onOpenLead, leads, onRefreshStats, onOpenReminder }) {
+export default function TasksView({ onOpenLead, leads, onRefreshStats, onOpenReminder, onOpenCallNotReceived }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterTab, setFilterTab] = useState('pending'); // 'pending', 'overdue', 'today', 'completed'
@@ -331,6 +332,28 @@ export default function TasksView({ onOpenLead, leads, onRefreshStats, onOpenRem
                       >
                         <Phone className="w-3.5 h-3.5" />
                       </a>
+                    )}
+
+                    {t.phone && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const matchingLead = leads?.find(l => l.id === t.lead_id) || {
+                            id: t.lead_id,
+                            contact_person: t.contact_person,
+                            company_name: t.company_name,
+                            phone: t.phone,
+                            email: t.email,
+                            service: t.service,
+                            deal_value: 0
+                          };
+                          if (onOpenCallNotReceived) onOpenCallNotReceived(matchingLead);
+                        }}
+                        className="p-2 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30"
+                        title="Call Not Received ➔ Reschedule Follow-up"
+                      >
+                        <PhoneMissed className="w-3.5 h-3.5 text-rose-400" />
+                      </button>
                     )}
 
                     {t.email && (

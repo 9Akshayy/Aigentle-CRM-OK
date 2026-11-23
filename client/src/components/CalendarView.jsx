@@ -26,7 +26,8 @@ import {
   Clock, 
   Layers,
   ArrowRight,
-  Bell
+  Bell,
+  PhoneMissed
 } from 'lucide-react';
 
 const MONTH_NAMES = [
@@ -47,7 +48,8 @@ export default function CalendarView({
   onStageChange,
   currency,
   onOpenNewLead,
-  onOpenReminder
+  onOpenReminder,
+  onOpenCallNotReceived
 }) {
   // Find the most recent date with leads to set intelligent default year & month
   const initialDate = useMemo(() => {
@@ -769,6 +771,18 @@ export default function CalendarView({
                             >
                               <Phone className="w-3.5 h-3.5" />
                             </a>
+                          )}
+                          {lead.phone && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (onOpenCallNotReceived) onOpenCallNotReceived(lead);
+                              }}
+                              className="p-1 rounded hover:bg-slate-800 text-rose-400 hover:text-rose-300 transition-colors"
+                              title={`Call Not Received ➔ Follow-up for ${lead.contact_person}`}
+                            >
+                              <PhoneMissed className="w-3.5 h-3.5" />
+                            </button>
                           )}
                           {lead.email && (
                             <a

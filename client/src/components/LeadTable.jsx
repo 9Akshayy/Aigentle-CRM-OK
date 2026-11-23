@@ -27,7 +27,8 @@ import {
   Layers, 
   Sparkles,
   Calendar,
-  Bell
+  Bell,
+  PhoneMissed
 } from 'lucide-react';
 
 export default function LeadTable({
@@ -43,7 +44,8 @@ export default function LeadTable({
   sortOrder,
   setSortOrder,
   initialStageFilter = 'all',
-  onOpenReminder
+  onOpenReminder,
+  onOpenCallNotReceived
 }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkTargetStage, setBulkTargetStage] = useState('');
@@ -567,6 +569,17 @@ export default function LeadTable({
                               <Phone className="w-3.5 h-3.5" />
                             </a>
                           )}
+                          {lead.phone && (
+                            <button
+                              onClick={() => {
+                                if (onOpenCallNotReceived) onOpenCallNotReceived(lead);
+                              }}
+                              className="p-1 rounded hover:bg-slate-700 text-rose-400 hover:text-rose-300 transition-colors"
+                              title="Call Not Received ➔ Move to Follow-up"
+                            >
+                              <PhoneMissed className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           {lead.email && (
                             <a
                               href={`mailto:${lead.email}`}
@@ -711,6 +724,20 @@ export default function LeadTable({
                       >
                         <Phone className="w-3.5 h-3.5" />
                       </a>
+                    )}
+
+                    {lead.phone && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onOpenCallNotReceived) onOpenCallNotReceived(lead);
+                        }}
+                        className="p-1.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold flex items-center gap-1"
+                        title="Call Not Received ➔ Follow-up"
+                      >
+                        <PhoneMissed className="w-3.5 h-3.5 text-rose-400" />
+                        <span className="text-[10px]">Missed</span>
+                      </button>
                     )}
                   </div>
                 </div>

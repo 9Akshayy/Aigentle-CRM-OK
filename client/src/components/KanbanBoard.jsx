@@ -28,7 +28,8 @@ import {
   Layers,
   ChevronRight,
   ChevronLeft,
-  Bell
+  Bell,
+  PhoneMissed
 } from 'lucide-react';
 
 export default function KanbanBoard({
@@ -43,7 +44,8 @@ export default function KanbanBoard({
   selectedOwner,
   setSelectedOwner,
   initialStageFilter = 'all',
-  onOpenReminder
+  onOpenReminder,
+  onOpenCallNotReceived
 }) {
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
@@ -661,6 +663,19 @@ export default function KanbanBoard({
                               >
                                 <Phone className="w-3 h-3" />
                               </a>
+                            )}
+                            {lead.phone && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onOpenCallNotReceived) onOpenCallNotReceived(lead);
+                                }}
+                                className="p-1 hover:text-rose-400 hover:bg-slate-700/80 rounded transition-colors text-slate-400"
+                                title={`Call Not Received ➔ Move to Follow-up for ${lead.contact_person}`}
+                              >
+                                <PhoneMissed className="w-3.5 h-3.5 text-rose-400/90" />
+                              </button>
                             )}
                             {lead.email && (
                               <a

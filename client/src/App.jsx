@@ -13,6 +13,7 @@ import TasksView from './components/TasksView';
 import EmailTemplateModal from './components/EmailTemplateModal';
 import CsvImportExportModal from './components/CsvImportExportModal';
 import SendReminderModal from './components/SendReminderModal';
+import CallNotReceivedModal from './components/CallNotReceivedModal';
 import { STAGES } from './constants/crm';
 
 export default function App() {
@@ -45,10 +46,17 @@ export default function App() {
   const [leadForEmailTemplate, setLeadForEmailTemplate] = useState(null);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [leadForReminder, setLeadForReminder] = useState(null);
+  const [isCallNotReceivedOpen, setIsCallNotReceivedOpen] = useState(false);
+  const [leadForCallNotReceived, setLeadForCallNotReceived] = useState(null);
 
   const handleOpenReminder = (lead) => {
     setLeadForReminder(lead);
     setIsReminderModalOpen(true);
+  };
+
+  const handleOpenCallNotReceived = (lead) => {
+    setLeadForCallNotReceived(lead);
+    setIsCallNotReceivedOpen(true);
   };
 
   // Fetch leads and pipeline statistics
@@ -262,6 +270,7 @@ export default function App() {
                 setSelectedOwner={setSelectedOwner}
                 initialStageFilter={targetStageForKanban}
                 onOpenReminder={handleOpenReminder}
+                onOpenCallNotReceived={handleOpenCallNotReceived}
               />
             )}
 
@@ -280,6 +289,7 @@ export default function App() {
                 setSortOrder={setSortOrder}
                 initialStageFilter={targetStageForKanban}
                 onOpenReminder={handleOpenReminder}
+                onOpenCallNotReceived={handleOpenCallNotReceived}
               />
             )}
 
@@ -291,6 +301,7 @@ export default function App() {
                 currency={currency}
                 onOpenNewLead={() => setIsNewLeadModalOpen(true)}
                 onOpenReminder={handleOpenReminder}
+                onOpenCallNotReceived={handleOpenCallNotReceived}
               />
             )}
 
@@ -311,6 +322,7 @@ export default function App() {
                 onOpenLead={(lead) => setSelectedLeadForDrawer(lead)}
                 onRefreshStats={loadData}
                 onOpenReminder={handleOpenReminder}
+                onOpenCallNotReceived={handleOpenCallNotReceived}
               />
             )}
 
@@ -345,6 +357,7 @@ export default function App() {
             setCurrentView('kanban');
           }}
           onOpenReminder={handleOpenReminder}
+          onOpenCallNotReceived={handleOpenCallNotReceived}
         />
       )}
 
@@ -380,6 +393,14 @@ export default function App() {
         lead={leadForReminder}
         onReminderSent={loadData}
         currency={currency}
+      />
+
+      {/* 6. Call Not Received / Not Answered Follow-up Modal */}
+      <CallNotReceivedModal
+        isOpen={isCallNotReceivedOpen}
+        onClose={() => setIsCallNotReceivedOpen(false)}
+        lead={leadForCallNotReceived}
+        onSuccess={loadData}
       />
 
     </div>
